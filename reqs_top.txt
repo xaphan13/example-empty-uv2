@@ -1,0 +1,5 @@
+rich==14.2.0
+sshtunnel==0.4.0
+streamz==0.6.5
+pywin32
+win32gui==221.6

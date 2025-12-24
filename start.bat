@@ -1,0 +1,1 @@
+venv\Scripts\python.exe O:\0_AI\example_py\main.py
