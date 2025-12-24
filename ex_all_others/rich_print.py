@@ -16,7 +16,11 @@ def rich_console_text():
 
     inspect(logF, methods=False, private=False, docs=False)
     a, b, c = 1111111111111, 22222222222222, 333333333333333
-    text111, text222, text333 = Text("4444444444444444"), Text("5555555555555555"), Text("5555555555555555")
+    text111, text222, text333 = (
+        Text("4444444444444444"),
+        Text("5555555555555555"),
+        Text("5555555555555555"),
+    )
 
     print(locals())
     r_print(locals())

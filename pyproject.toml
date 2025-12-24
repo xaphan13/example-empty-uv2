@@ -7,12 +7,43 @@ readme = "README.md"
 requires-python = ">=3.11"
 
 dependencies = [
+    "ruff>=0.14.10",
     "black>=25.0.0",
     "pywin32>=311",
     "rich==14.2.0",
     "sshtunnel==0.4.0",
     "streamz==0.6.5",
 ]
+
+
+
+
+[tool.ruff.lint]
+ignore = [
+    "F401",
+    "E402",
+    "F541"
+]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    ".vscode",
+    "__pypackages__",
+    "__pycache__",
+    "_build",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages"
+]
+
 
 
 

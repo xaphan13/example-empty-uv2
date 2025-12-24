@@ -43,7 +43,7 @@ def outer(a=77):
 
 def run_demo():
     # Логирование всех глобальных переменных модуля (без служебных и logF)
-    module_globals = {k: v for k, v in globals().items() if not k.startswith("__") and k != "logF"}
+    module_globals = {k: v for k, v in globals().items() if not k.startswith("__") and k != "logF"}  # noqa: F841
     # logF.info(f"Глобальные переменные модуля: {module_globals}")
 
     outer()

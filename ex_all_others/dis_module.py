@@ -26,7 +26,7 @@ def dis_mod():
     logF.info(f"'****' dis_mod - 'start'")
 
     dir_current = pathlib.Path(__file__).parent
-    path = pathlib.Path(dir_current, "my_module.py")
+    path = pathlib.Path(dir_current, "my_module.py")  # noqa: F841
 
     m = sys.modules.get("ex_all_others.my_module")  # модуль уже импортирован
 

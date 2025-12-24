@@ -19,7 +19,7 @@ def run_streamz_example():
 
     numbers = [1, 2, 3, 4, 5]
     for x in numbers:
-        f = source.emit(x)
+        f = source.emit(x)  # noqa: F841
         # print(type(f))
 
     print(results)
