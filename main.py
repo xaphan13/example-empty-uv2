@@ -1,6 +1,6 @@
 from config_log import ConfigLogger
 
-ConfigLogger.setting_path_logger(log_file="example.log")
+ConfigLogger.setting_path_logger(log_file="empty-uv2.log")
 
 logF = ConfigLogger.get_logger("OnlyFile")
 logFC = ConfigLogger.get_logger("FileStdout")

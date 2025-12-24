@@ -21,17 +21,16 @@ def main_others(w=None):
         return
     logFC.info(f"'****' main_others - 'start'")
 
-    global gg
-    glob_mod.ggg = 1000
-
-    logFC.info(f"glob - ggg = {ggg} - {glob_mod.ggg} - {glob_mod.get_func()}")
-    glob_mod.set_func(22)
-    ggg = 10
-    logFC.info(f"glob - ggg = {ggg} - {glob_mod.ggg} - {glob_mod.get_func()}")
+    # global ggg
+    # glob_mod.ggg = 1000
+    # logFC.info(f"glob - ggg = {ggg} - {glob_mod.ggg} - {glob_mod.get_func()}")
+    # glob_mod.set_func(22)
+    # ggg = 10
+    # logFC.info(f"glob - ggg = {ggg} - {glob_mod.ggg} - {glob_mod.get_func()}")
 
     # trap_task.trap_1()
     # dis_async_await.async_start()
-    # rich_print.rich_console_text()
+    rich_print.rich_console_text()
 
     # closure_func.closure_start()
     # closure_func.closure_new1()
