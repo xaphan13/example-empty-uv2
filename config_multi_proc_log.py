@@ -21,15 +21,15 @@ class SingletonQueueLogger:
         self.log_multi_queue = None
         self.log_dir = log_dir
         self.log_file = log_file
-        self.path_log_file = f"{self.log_dir}\\{self.log_file}"
+        self.path_log_file = os.path.join(self.log_dir, self.log_file)
 
     def create_queue(self):
         if self.log_multi_queue is None:
             self.log_multi_queue = Queue()
 
     def create_log_dir(self):
-        if not os.path.exists(self.path_log_file):
-            os.mkdir(self.path_log_file)
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir, exist_ok=True)
 
     def get_path_log(self):
         return self.path_log_file
