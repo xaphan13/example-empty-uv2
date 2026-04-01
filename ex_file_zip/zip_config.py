@@ -17,4 +17,4 @@ def log_paths():
     logF.info(f"Absolute paths: {NAME_DIR_FILES=} \n{DIR_FILES=}")
 
 
-log_paths()
+# log_paths()

@@ -3,7 +3,7 @@ import os
 
 
 LOG_DIR = "./log"
-LOG_FILE = "example.log"
+LOG_FILE = "empty-uv2.log"
 
 
 class ConfigLogger:
