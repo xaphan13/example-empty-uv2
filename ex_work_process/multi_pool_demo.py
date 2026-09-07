@@ -4,9 +4,10 @@ from multiprocessing import Pool, cpu_count
 from config_multi_proc_log import multi_logger, logger_settings
 
 # Импортируем инициализатор и саму задачу из нового модуля
-from ex_work_process.pool_worker import init_worker, perform_heavy_computation
+from ex_work_process.multi_pool_worker import init_worker, perform_heavy_computation
 
 logF = multi_logger
+
 
 def run_pool_demo():
     """
@@ -37,7 +38,6 @@ def run_pool_demo():
     # и очередь log_queue в качестве аргумента (initargs) для него.
     # Это позволяет каждому процессу в пуле при старте настроить логирование в общую очередь.
     with Pool(processes=num_processes, initializer=init_worker, initargs=(log_queue,)) as pool:
-
         # Существует несколько способов распределить задачи.
         # 1. pool.map - блокирует выполнение до получения всех результатов и возвращает список результатов.
         # 2. pool.imap / pool.imap_unordered - возвращает итератор. Удобно для потоковой обработки
@@ -56,10 +56,12 @@ def run_pool_demo():
         # Итерируемся по результатам по мере того как воркеры их завершают
         for result in results_iterator:
             successful_tasks += 1
-            total_time_spent += result['elapsed_time']
-            logF.info(f"Main process received result for {result['task_id']}: "
-                      f"Hash={result['hash'][:10]}... Nonce={result['nonce']} "
-                      f"(Worker PID: {result['worker_pid']})")
+            total_time_spent += result["elapsed_time"]
+            logF.info(
+                f"Main process received result for {result['task_id']}: "
+                f"Hash={result['hash'][:10]}... Nonce={result['nonce']} "
+                f"(Worker PID: {result['worker_pid']})"
+            )
 
     total_elapsed = time.time() - start_time
 

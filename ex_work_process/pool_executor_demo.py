@@ -29,7 +29,7 @@ def init_worker(log_queue):
     logF.info(f"Рабочий процесс инициализирован (PID: {os.getpid()})")
 
 
-def run_pool_demo():
+def run_executor_demo():
     """
     Демонстрационная функция, запускающая пул процессов (ProcessPoolExecutor) для параллельного
     выполнения ресурсоемкой задачи факторизации.

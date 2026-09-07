@@ -9,6 +9,7 @@ _log_queue = None
 
 logF = multi_logger
 
+
 def init_worker(log_queue):
     """
     Инициализатор для каждого процесса в пуле.
@@ -23,6 +24,7 @@ def init_worker(log_queue):
     every_process_create_queue_handler(_log_queue)
 
     logF.info(f"Worker initialized: PID={os.getpid()}, Parent PID={os.getppid()}")
+
 
 def perform_heavy_computation(task_data):
     """
@@ -45,7 +47,7 @@ def perform_heavy_computation(task_data):
     nonce = 0
     while True:
         # Формируем строку и вычисляем ее хеш
-        text = f"{task_id}-{nonce}".encode('utf-8')
+        text = f"{task_id}-{nonce}".encode("utf-8")
         current_hash = hashlib.sha256(text).hexdigest()
 
         # Проверяем условие сложности (начинается ли хеш с заданного числа нулей)
@@ -62,5 +64,5 @@ def perform_heavy_computation(task_data):
         "nonce": nonce,
         "hash": current_hash,
         "elapsed_time": elapsed_time,
-        "worker_pid": os.getpid()
+        "worker_pid": os.getpid(),
     }
