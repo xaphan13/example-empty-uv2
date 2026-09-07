@@ -12,8 +12,10 @@ from multiprocessing import Queue
 from ex_work_process.multi_process_class import Process_work
 
 
-def two_class_proc():
-    logF.info(f"'****' two_class_proc - 'start'")
+def start_process_demo(w=None):
+    if w is not None:  # w=None
+        return
+    logF.info(f"'****' start_process_demo - 'start'")
 
     inqueue, outqueue = Queue(), Queue()
 

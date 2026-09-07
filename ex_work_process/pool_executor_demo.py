@@ -29,13 +29,15 @@ def init_worker(log_queue):
     logF.info(f"Рабочий процесс инициализирован (PID: {os.getpid()})")
 
 
-def run_executor_demo():
+def run_executor_demo(w=None):
     """
     Демонстрационная функция, запускающая пул процессов (ProcessPoolExecutor) для параллельного
     выполнения ресурсоемкой задачи факторизации.
     Функция демонстрирует правильную работу с многопроцессным логированием через очередь.
     """
-    logF.info("Запуск демо: ProcessPoolExecutor с задачей факторизации (CPU-bound)")
+    if w is not None:  # w=None
+        return
+    logF.info("Запуск демо: ProcessPoolExecutor run_executor_demo")
 
     # Подготовим список чисел, факторизацию которых будем производить параллельно.
     # Большие числа выбраны для того, чтобы наглядно загрузить процессор

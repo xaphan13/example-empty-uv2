@@ -9,13 +9,15 @@ from ex_work_process.multi_pool_worker import init_worker, perform_heavy_computa
 logF = multi_logger
 
 
-def run_pool_demo():
+def run_pool_demo(w=None):
     """
-    Демонстрация использования multiprocessing.Pool.
+    Демонстрация использования multiprocessing. Pool.
     Pool (Пул процессов) — это более удобный и высокоуровневый способ управления рабочими процессами,
     чем ручное создание объектов Process. Пул автоматически распределяет задачи по доступным процессам
     и собирает результаты.
     """
+    if w is not None:  # w=None
+        return
     logF.info("**** run_pool_demo - 'start' ****")
 
     # Определяем количество доступных логических ядер процессора
