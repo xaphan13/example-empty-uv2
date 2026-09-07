@@ -9,7 +9,6 @@ requires-python = ">=3.12"
 dependencies = [
     "ruff>=0.14.10",
     "black>=25.0.0",
-    "pywin32>=311",
     "rich==14.2.0",
     "sshtunnel==0.4.0",
     "streamz==0.6.5",
