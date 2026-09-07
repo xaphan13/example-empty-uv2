@@ -9,7 +9,7 @@ logF = multi_logger
 
 from multiprocessing import Queue
 
-from ex_work_process.work_class_process import Process_work
+from ex_work_process.multi_process_class import Process_work
 
 
 def two_class_proc():

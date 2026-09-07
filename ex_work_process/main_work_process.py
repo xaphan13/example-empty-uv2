@@ -3,10 +3,10 @@ from config_multi_proc_log import (
     main_process_start_logging,
     every_process_create_queue_handler,
 )
+from ex_work_process import multi_process_demo
+from ex_work_process import pool_executor_demo
 
 logF = multi_logger
-
-from ex_work_process import demo_class_process
 
 
 def run_process_demo(w=None):
@@ -17,6 +17,7 @@ def run_process_demo(w=None):
 
     logF.info(f"'****' run_process_demo - 'start'")
 
-    demo_class_process.two_class_proc()
+    multi_process_demo.two_class_proc()
+    pool_executor_demo.run_pool_demo()
 
     listener.stop()  # Останавливаем слушателя мультиОчереди логирования
