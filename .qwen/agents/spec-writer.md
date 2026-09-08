@@ -1,7 +1,7 @@
 ---
 name: spec-writer
 description: Автор спецификаций команды. Отдельная сессия фазы создания задания: исследует зону будущего задания и пишет полный tasks/current/REQUIREMENTS.md с планом фаз делегирования по шаблону .qwen/skills/task-spec/TEMPLATE.md. Код продукта не пишет. Используется оркестратором через скилл task-spec ДО любых делегирований разработчикам.
-model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+model: xkiro/deepseek/deepseek-v4-pro
 approvalMode: auto-edit
 tools:
   - read_file

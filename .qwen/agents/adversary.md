@@ -1,7 +1,7 @@
 ---
 name: adversary
 description: Adversarial-ревизор команды агентов. Пытается сломать изменённую функциональность нешаблонными способами — запросы к запущенному приложению, крайние значения, нестандартные последовательности — и записывает каждую находку в ADVERSARIAL_REVIEW.md. Ничего не исправляет и не триажирует свои находки. Использовать ПРОАКТИВНО, когда фича готова и нужен враждебный прогон.
-model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+model: xkiro/minimax/minimax-m3:free
 approvalMode: auto-edit
 tools:
   - read_file
