@@ -18,8 +18,8 @@ def run_process_demo(w=None):
 
     logF.info(f"'****' run_process_demo - 'start'")
 
-    multi_process_demo.start_process_demo()
-    pool_executor_demo.run_executor_demo(0)
+    multi_process_demo.start_process_demo(0)
+    pool_executor_demo.run_executor_demo()
     multi_pool_demo.run_pool_demo(0)
 
     listener.stop()  # Останавливаем слушателя мультиОчереди логирования

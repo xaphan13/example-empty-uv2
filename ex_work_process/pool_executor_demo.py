@@ -69,7 +69,7 @@ def run_executor_demo(w=None):
     with ProcessPoolExecutor(
         max_workers=max_workers,
         initializer=init_worker,
-        initargs=(logger_settings.get_queue()),
+        initargs=(logger_settings.get_queue(),),
     ) as executor:
         # Размещаем задачи (submit) в пул процессов.
         # Метод submit возвращает объект Future, представляющий собой отложенный результат.
