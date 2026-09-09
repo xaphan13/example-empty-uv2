@@ -1,0 +1,127 @@
+=== QA re-verification of DEF-001 / DEF-002 / DEF-003 ===
+Date: 2026-09-09
+Scope: все три дефекта в статусе FIX-READY в tasks/current/DEFECTS.md.
+Контрольная сборка: head 1a3a82... (см. git log; см. ниже)
+Окружение: Linux, Python 3.12, uv, Xvfb :99 поднят оркестратором (PID 3416210) — НЕ прибивать.
+
+--- Pre-flight ---
+$ pgrep -af "uvicorn.*main:main_app"
+(none, нечего гасить)
+$ pgrep -af "Xvfb"
+3416210 Xvfb :99 -screen 0 1024x768x24   <- оркестраторский, оставлен
+$ echo $DISPLAY
+(empty -> использую xvfb-run -a)
+=== QA re-verification of DEF-001/DEF-002/DEF-003 ===
+Date: 2026-09-09
+Pre-flight:
+  pgrep -af "uvicorn.*main:main_app" -> (none, no uvicorn)
+  pgrep -af "Xvfb" -> Xvfb :99 (PID 3416210, from orchestrator - NOT to kill)
+  DISPLAY="" -> empty (use xvfb-run -a)
+
+============================================
+BATCH 1: CLI (DEF-003 + нерегрессия)
+============================================
+==========================================
+BATCH 1A: CLI smoke window negatives/edge
+==========================================
+--- --smoke-window -5 ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: значение должно быть числом > 0 (получено '-5')
+neg_exit=2
+
+--- --smoke-window 0 ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: значение должно быть числом > 0 (получено '0')
+zero_exit=2
+
+--- --smoke-window abc ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: invalid float value: 'abc'
+abc_exit=2
+
+--- --smoke-window "" ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: invalid float value: ''
+empty_exit=2
+
+==========================================
+BATCH 1B: --smoke-window 3 under Xvfb
+==========================================
+ok_exit=0
+
+==========================================
+BATCH 1C: --smoke valid_bracket headless
+==========================================
+2026-09-09 19:07:29 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-09 19:07:29 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-09 19:07:29 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 19:07:29 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 19:07:29 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+
+smoke_exit=0
+
+==========================================
+BATCH 1D: ruff check ex_window_app_customtkinter/
+==========================================
+All checks passed!
+ruff_exit=0
+
+============================================
+BATCH 2: functional (DEF-001 + DEF-002 default size)
+============================================
+==========================================
+BATCH 2: Functional check DEF-001 + DEF-002 (defaults)
+==========================================
+=== DEF-001 functional check ===
+step1_ok: True
+output_len: 419
+output_first200: "=== Запуск: Code War: проверка скобочных последовательностей (valid_bracket) ===\n2026-09-09 19:08:39 [INFO] OnlyFile: '****' main_code_war - 'start'\n2026-09-09 19:08:39 [INFO] OnlyFile: '****' run_val"
+output_last200: "9-09 19:08:39 [INFO] OnlyFile: inn() - res = (True, '({[]})')\n2026-09-09 19:08:39 [INFO] OnlyFile: inn() - res = (True, '({[]})')\n2026-09-09 19:08:39 [INFO] OnlyFile: inn() - res = (False, '[', '(')\n\n"
+has_launch_header: True
+has_result: True
+status: 'Завершено'
+metric_status: 'Завершено'
+sidebar_w: 280
+content_w: 572
+worker_alive: False
+def001_exit=0
+
+==========================================
+BATCH 3: Geometry DEF-002 at 1400x900 and 800x520
+==========================================
+=== DEF-002 geometry check ===
+big_window: 1400 x 900
+big_sidebar_w: 280
+big_content_w: 1072
+min_window: 800 x 520
+min_sidebar_w: 280
+min_content_w: 472
+def002_geom_exit=0
+
+============================================
+BATCH 3: geometry DEF-002 (1400x900 vs 800x520)
+============================================
+BATCH 3: Geometry DEF-002 at 1400x900 and 800x520
+==========================================
+=== DEF-002 geometry check ===
+big_window: 1400 x 900
+big_sidebar_w: 280
+big_content_w: 1072
+min_window: 800 x 520
+min_sidebar_w: 280
+min_content_w: 472
+def002_geom_exit=0
+
+============================================
+Post-check: лишних процессов нет
+============================================
+$ pgrep -af 'python.*main_window_app' :
+3450658 bash -c cd /home/max/0_0_26_new_one/example-empty-uv2 && cat > tasks/current/e2e/05_defects.txt <<'HEADER' === QA re-verification of DEF-001 / DEF-002 / DEF-003 === Date: 2026-09-09 Scope: все три дефекта в статусе FIX-READY в tasks/current/DEFECTS.md. Контрольная сборка: head 1a3a82... (см. git log; см. ниже) Окружение: Linux, Python 3.12, uv, Xvfb :99 поднят оркестратором (PID 3416210) — НЕ прибивать.  --- Pre-flight --- $ pgrep -af "uvicorn.*main:main_app" (none, нечего гасить) $ pgrep -af "Xvfb" 3416210 Xvfb :99 -screen 0 1024x768x24   <- оркестраторский, оставлен $ echo $DISPLAY (empty -> использую xvfb-run -a) HEADER cat tasks/current/e2e/_header.txt >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "BATCH 1: CLI (DEF-003 + нерегрессия)" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt cat tasks/current/e2e/05_defects_batch1_cli.txt >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "BATCH 2: functional (DEF-001 + DEF-002 default size)" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt cat tasks/current/e2e/05_defects_batch23_func.txt >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "BATCH 3: geometry DEF-002 (1400x900 vs 800x520)" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt cat tasks/current/e2e/05_defects_batch23_func.txt | sed -n '/BATCH 3/,$p' >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "Post-check: лишних процессов нет" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "\$ pgrep -af 'python.*main_window_app' :" >> tasks/current/e2e/05_defects.txt pgrep -af "python.*main_window_app" >> tasks/current/e2e/05_defects.txt 2>&1 echo "(ничего, кроме самого pgrep)" >> tasks/current/e2e/05_defects.txt echo "\$ pgrep -af 'Xvfb' :" >> tasks/current/e2e/05_defects.txt pgrep -af "Xvfb" >> tasks/current/e2e/05_defects.txt 2>&1 wc -l tasks/current/e2e/05_defects.txt echo "---first 40 lines---" head -40 tasks/current/e2e/05_defects.txt
+(ничего, кроме самого pgrep)
+$ pgrep -af 'Xvfb' :
+3416210 Xvfb :99 -screen 0 1024x768x24
+3450658 bash -c cd /home/max/0_0_26_new_one/example-empty-uv2 && cat > tasks/current/e2e/05_defects.txt <<'HEADER' === QA re-verification of DEF-001 / DEF-002 / DEF-003 === Date: 2026-09-09 Scope: все три дефекта в статусе FIX-READY в tasks/current/DEFECTS.md. Контрольная сборка: head 1a3a82... (см. git log; см. ниже) Окружение: Linux, Python 3.12, uv, Xvfb :99 поднят оркестратором (PID 3416210) — НЕ прибивать.  --- Pre-flight --- $ pgrep -af "uvicorn.*main:main_app" (none, нечего гасить) $ pgrep -af "Xvfb" 3416210 Xvfb :99 -screen 0 1024x768x24   <- оркестраторский, оставлен $ echo $DISPLAY (empty -> использую xvfb-run -a) HEADER cat tasks/current/e2e/_header.txt >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "BATCH 1: CLI (DEF-003 + нерегрессия)" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt cat tasks/current/e2e/05_defects_batch1_cli.txt >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "BATCH 2: functional (DEF-001 + DEF-002 default size)" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt cat tasks/current/e2e/05_defects_batch23_func.txt >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "BATCH 3: geometry DEF-002 (1400x900 vs 800x520)" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt cat tasks/current/e2e/05_defects_batch23_func.txt | sed -n '/BATCH 3/,$p' >> tasks/current/e2e/05_defects.txt echo "" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "Post-check: лишних процессов нет" >> tasks/current/e2e/05_defects.txt echo "============================================" >> tasks/current/e2e/05_defects.txt echo "\$ pgrep -af 'python.*main_window_app' :" >> tasks/current/e2e/05_defects.txt pgrep -af "python.*main_window_app" >> tasks/current/e2e/05_defects.txt 2>&1 echo "(ничего, кроме самого pgrep)" >> tasks/current/e2e/05_defects.txt echo "\$ pgrep -af 'Xvfb' :" >> tasks/current/e2e/05_defects.txt pgrep -af "Xvfb" >> tasks/current/e2e/05_defects.txt 2>&1 wc -l tasks/current/e2e/05_defects.txt echo "---first 40 lines---" head -40 tasks/current/e2e/05_defects.txt

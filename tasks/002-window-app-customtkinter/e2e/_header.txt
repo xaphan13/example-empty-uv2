@@ -1,0 +1,6 @@
+=== QA re-verification of DEF-001/DEF-002/DEF-003 ===
+Date: 2026-09-09
+Pre-flight:
+  pgrep -af "uvicorn.*main:main_app" -> (none, no uvicorn)
+  pgrep -af "Xvfb" -> Xvfb :99 (PID 3416210, from orchestrator - NOT to kill)
+  DISPLAY="" -> empty (use xvfb-run -a)

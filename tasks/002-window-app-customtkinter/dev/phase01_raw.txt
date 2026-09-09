@@ -1,0 +1,27 @@
+Resolved 39 packages in 3.85s
+Uninstalled 2 packages in 21ms
+ - pillow==12.3.0
+ - ttkbootstrap==2.2.2
+Resolved 41 packages in 2.88s
+Prepared 2 packages in 4.48s
+Installed 2 packages in 27ms
+ + customtkinter==6.0.0
+ + darkdetect==0.8.0
+=== checkpoint: uv sync ===
+Resolved 41 packages in 1ms
+Checked 36 packages in 0.57ms
+--- uv sync exit: 0 ---
+
+=== checkpoint: import customtkinter as ctk, pygubu; print(ctk.__version__, pygubu.__version__) (дословно из спецификации) ===
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+AttributeError: module 'pygubu' has no attribute '__version__'
+--- import-exit: 1 ---
+
+=== checkpoint: альтернативный способ печати версий (importlib.metadata), поскольку pygubu не предоставляет __version__ ===
+customtkinter 6.0.0
+pygubu 0.42.1
+--- metadata-exit: 0 ---
+
+=== checkpoint: grep -i ttkbootstrap pyproject.toml uv.lock ===
+--- grep exit: 1 (1 = ничего не найдено, ОК) ---

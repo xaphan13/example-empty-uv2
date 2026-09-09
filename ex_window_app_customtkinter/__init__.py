@@ -1,4 +1,4 @@
-"""Пакет ex_window_app_ttkbootstrap — GUI-пример на ttkbootstrap + pygubu.
+"""Пакет ex_window_app_customtkinter — GUI-пример на CustomTkinter + pygubu.
 
 Содержит:
 - example_runner.py — реестр курируемых примеров и запуск с захватом вывода.

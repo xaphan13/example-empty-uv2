@@ -1,0 +1,70 @@
+All checks passed!
+import ok
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_customtkinter/main_window_app.py", line 264, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_customtkinter/main_window_app.py", line 253, in main
+    return _run_smoke_window(seconds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_customtkinter/main_window_app.py", line 181, in _run_smoke_window
+    app = ApplicationWindow()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_customtkinter/application_window.py", line 136, in __init__
+    self.main_frame = self.builder.get_object("main_frame", self.window)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/max/0_0_26_new_one/example-empty-uv2/.venv/lib/python3.12/site-packages/pygubu/builder.py", line 220, in get_object
+    bobject = self._realize(root, wmeta, extra_init_args)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/max/0_0_26_new_one/example-empty-uv2/.venv/lib/python3.12/site-packages/pygubu/builder.py", line 333, in _realize
+    self._import_class(wmeta.classname)
+  File "/home/max/0_0_26_new_one/example-empty-uv2/.venv/lib/python3.12/site-packages/pygubu/builder.py", line 247, in _import_class
+    raise e
+  File "/home/max/0_0_26_new_one/example-empty-uv2/.venv/lib/python3.12/site-packages/pygubu/builder.py", line 239, in _import_class
+    importlib.import_module(_module)
+  File "/home/max/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/home/max/0_0_26_new_one/example-empty-uv2/.venv/lib/python3.12/site-packages/pygubu/plugins/customtkinter/widgets.py", line 2, in <module>
+    import pygubu.plugins.customtkinter.tabview
+  File "/home/max/0_0_26_new_one/example-empty-uv2/.venv/lib/python3.12/site-packages/pygubu/plugins/customtkinter/tabview.py", line 7, in <module>
+    from .ctkbase import CTkBaseMixin
+  File "/home/max/0_0_26_new_one/example-empty-uv2/.venv/lib/python3.12/site-packages/pygubu/plugins/customtkinter/ctkbase.py", line 12, in <module>
+    from PIL import Image, ImageTk
+ModuleNotFoundError: No module named 'PIL'
+
+
+===== Прогон после снятия блокера pillow: 2026-09-09 =====
+
+--- $ uv run ruff check ex_window_app_customtkinter/
+All checks passed!
+exit=0
+
+--- $ uv run python -c "from ex_window_app_customtkinter.application_window import ApplicationWindow; print(import ok)"
+import ok
+exit=0
+
+--- $ xvfb-run -a uv run python -m ex_window_app_customtkinter.main_window_app --smoke-window 5
+Attempt to set an unknown property 'wraplength' on class '<class 'customtkinter.windows.widgets.ctk_label.CTkLabel'>'
+Attempt to set an unknown property 'wraplength' on class '<class 'customtkinter.windows.widgets.ctk_label.CTkLabel'>'
+Attempt to set an unknown property 'wraplength' on class '<class 'customtkinter.windows.widgets.ctk_label.CTkLabel'>'
+Attempt to set an unknown property 'wraplength' on class '<class 'customtkinter.windows.widgets.ctk_label.CTkLabel'>'
+Attempt to set an unknown property 'wraplength' on class '<class 'customtkinter.windows.widgets.ctk_label.CTkLabel'>'
+exit=0
+
+--- (бонус) $ uv run python -m ex_window_app_customtkinter.main_window_app --smoke valid_bracket
+2026-09-09 18:07:04 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-09 18:07:04 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-09 18:07:04 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 18:07:04 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 18:07:04 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+
+exit=0

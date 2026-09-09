@@ -1,0 +1,24 @@
+=== batch 1: deps + ruff + rename ===
+6.0.0 0.42.1
+---ttkbootstrap_in_pyproject (count)---
+0
+---pillow_in_pyproject (count)---
+1
+---customtkinter_in_pyproject (count)---
+1
+---ruff_check---
+All checks passed!
+---ruff_exit=0---
+---ls_dir---
+итого 148
+drwxrwxr-x  4 max max  4096 сен  9 18:36 .
+drwxrwxr-x 21 max max  4096 сен  9 17:32 ..
+-rw-rw-r--  1 max max 49402 сен  9 18:36 application_window.py
+-rw-rw-r--  1 max max 15425 сен  8 23:28 example_runner.py
+-rw-rw-r--  1 max max   655 сен  9 18:29 __init__.py
+drwxrwxr-x  2 max max  4096 сен  9 16:22 log
+-rw-rw-r--  1 max max 14561 сен  9 18:29 main_window_app.py
+drwxrwxr-x  2 max max  4096 сен  9 18:36 __pycache__
+-rw-rw-r--  1 max max 41492 сен  9 18:27 window_app.ui
+---grep_old_name---
+grep_exit=1

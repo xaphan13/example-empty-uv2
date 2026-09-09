@@ -1,0 +1,48 @@
+==========================================
+BATCH 1A: CLI smoke window negatives/edge
+==========================================
+--- --smoke-window -5 ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: значение должно быть числом > 0 (получено '-5')
+neg_exit=2
+
+--- --smoke-window 0 ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: значение должно быть числом > 0 (получено '0')
+zero_exit=2
+
+--- --smoke-window abc ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: invalid float value: 'abc'
+abc_exit=2
+
+--- --smoke-window "" ---
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: invalid float value: ''
+empty_exit=2
+
+==========================================
+BATCH 1B: --smoke-window 3 under Xvfb
+==========================================
+ok_exit=0
+
+==========================================
+BATCH 1C: --smoke valid_bracket headless
+==========================================
+2026-09-09 19:07:29 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-09 19:07:29 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-09 19:07:29 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 19:07:29 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 19:07:29 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+
+smoke_exit=0
+
+==========================================
+BATCH 1D: ruff check ex_window_app_customtkinter/
+==========================================
+All checks passed!
+ruff_exit=0

@@ -1,0 +1,12 @@
+PYTHONPATH=. DISPLAY=:99 uv run python tasks/current/dev/phase08_def001_check.py
+step1_ok: True
+output_len: 419
+output_first200: "=== Запуск: Code War: проверка скобочных последовательностей (valid_bracket) ===\n2026-09-09 19:04:07 [INFO] OnlyFile: '****' main_code_war - 'start'\n2026-09-09 19:04:07 [INFO] OnlyFile: '****' run_val"
+has_launch_header: True
+has_result: True
+status: 'Завершено'
+metric_status: 'Завершено'
+sidebar_w: 280
+content_w: 572
+worker_alive: False
+exit=0

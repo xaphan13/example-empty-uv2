@@ -1,0 +1,63 @@
+## Phase 7 — raw outputs
+
+### ruff
+$ uv run ruff check ex_window_app_customtkinter/
+All checks passed!
+
+### headless import
+$ uv run python -c "from ex_window_app_customtkinter.application_window import ApplicationWindow; print('import ok')"
+import ok
+
+### smoke valid_bracket
+$ uv run python -m ex_window_app_customtkinter.main_window_app --smoke valid_bracket
+2026-09-09 18:37:47 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-09 18:37:47 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-09 18:37:47 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 18:37:47 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 18:37:47 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+exit 0
+
+### smoke-window 5 (Xvfb)
+$ xvfb-run -a uv run python -m ex_window_app_customtkinter.main_window_app --smoke-window 5
+exit 0
+stdout: empty
+stderr: empty (no tk warnings, no traceback)
+
+### geometry self-check (Xvfb, after update_idletasks)
+window:           900 x 600
+main_frame:       900 x 600
+sidebar:          233 x 576
+search_counter:   126 x 28
+cards_scroll:     200 x 430
+content:          619 x 576
+header:           579 x 58
+options:          579 x 24
+metrics:          579 x 74
+output_text:      579 x 292
+buttons:          579 x 36
+progressbar:      579 x 8
+
+### Builder load: 45 ids resolved
+ok main_frame CTkFrame
+ok sidebar_frame CTkFrame
+ok content_frame CTkFrame
+ok sidebar_title CTkLabel
+ok search_entry CTkEntry
+ok search_counter CTkLabel
+ok cards_scroll CTkScrollableFrame
+ok card_* (5 cards, 10 labels) CTkFrame/CTkLabel
+ok header_frame CTkFrame
+ok example_title CTkLabel
+ok example_desc CTkLabel
+ok options_frame CTkFrame
+ok clear_before_run_switch CTkSwitch
+ok autoscroll_switch CTkSwitch
+ok metrics_frame CTkFrame
+ok metric_card_* (3) CTkFrame + label/value CTkLabel x6
+ok output_text CTkTextbox
+ok buttons_frame CTkFrame
+ok run_button CTkButton
+ok clear_button CTkButton
+ok copy_button CTkButton
+ok progressbar CTkProgressBar
+ok status_label CTkLabel

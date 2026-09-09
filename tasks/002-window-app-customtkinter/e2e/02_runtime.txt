@@ -1,0 +1,22 @@
+=== batch 2: runtime behaviour ===
+--- smoke valid_bracket ---
+2026-09-09 18:44:50 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-09 18:44:50 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-09 18:44:50 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 18:44:50 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 18:44:50 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+
+--- smoke_exit=0 ---
+
+--- ui load via Builder (xvfb) ---
+ui loaded
+--- ui_load_exit=0 ---
+
+--- import ApplicationWindow ---
+import ok
+--- import_exit=0 ---
+
+--- smoke-window 5 under Xvfb ---
+--- smoke_window_exit=0 ---
+--- stderr_size=0 bytes ---
+--- stderr_content ---

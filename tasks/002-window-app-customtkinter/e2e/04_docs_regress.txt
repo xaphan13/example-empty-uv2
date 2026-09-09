@@ -1,0 +1,14 @@
+=== batch 4: docs + regress ===
+--- OK1: ex_window_app_customtkinter in 01_project_structure.md ---
+OK1
+--- OK2: main_window_app.py in 02_examples_overview.md ---
+OK2
+--- OK3: customtkinter in 01_project_structure.md ---
+OK3
+--- OK4: NO ttkbootstrap in 01_project_structure.md ---
+OK4
+--- OK5: NO ttkbootstrap in 02_examples_overview.md ---
+OK5
+
+--- regress: ex_async_simple ---
+regress_async_exit=0

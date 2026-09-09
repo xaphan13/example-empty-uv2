@@ -1,0 +1,24 @@
+=== batch 3: design-in-code ===
+--- corner_radius count in .ui ---
+23
+--- set_appearance_mode / set_default_color_theme in application_window.py (any) ---
+164:        ctk.set_appearance_mode(_APPEARANCE_MODE)
+165:        ctk.set_default_color_theme(_COLOR_THEME)
+--- constants defining the theme ---
+41:_APPEARANCE_MODE: Final[str] = "Dark"
+42:_COLOR_THEME: Final[str] = "blue"
+164:        ctk.set_appearance_mode(_APPEARANCE_MODE)
+165:        ctk.set_default_color_theme(_COLOR_THEME)
+--- #7aa2f7 accent in app/ui ---
+ex_window_app_customtkinter/application_window.py:3
+ex_window_app_customtkinter/window_app.ui:8
+--- columnconfigure/rowconfigure in application_window.py ---
+9
+--- v2 widget ids in .ui (all 5 must be present) ---
+id=clear_before_run_switch count=2
+id=autoscroll_switch count=2
+id=metric_registry_value count=1
+id=metric_last_run_value count=1
+id=metric_status_value count=1
+--- total v2-ids count (any-of) ---
+6

@@ -1,0 +1,105 @@
+Phase 02 — сырые выводы команд (raw).
+Дата: 2026-09-09
+Агент: backend-dev
+
+=== старт ===
+(ничего)
+
+=== шаг 2: git mv ===
+$ git mv ex_window_app_ttkbootstrap ex_window_app_customtkinter
+exit=0
+
+git status (фрагмент):
+R  ex_window_app_ttkbootstrap/__init__.py -> ex_window_app_customtkinter/__init__.py
+R  ex_window_app_ttkbootstrap/application_window.py -> ex_window_app_customtkinter/application_window.py
+R  ex_window_app_ttkbootstrap/example_runner.py -> ex_window_app_customtkinter/example_runner.py
+R  ex_window_app_ttkbootstrap/main_window_app.py -> ex_window_app_customtkinter/main_window_app.py
+R  ex_window_app_ttkbootstrap/window_app.ui -> ex_window_app_customtkinter/window_app.ui
+
+ls ex_window_app_customtkinter/ (после mv):
+__init__.py
+application_window.py
+example_runner.py
+log/               (нетрекаемый, переехал с mv)
+main_window_app.py
+__pycache__/       (нетрекаемый, переехал с mv)
+window_app.ui
+
+ls ex_window_app_ttkbootstrap/: No such file or directory
+
+=== шаг 3: замена имени пакета ===
+
+grep -n ex_window_app_ttkbootstrap ex_window_app_customtkinter/ (ДО замены):
+__init__.py:1: docstring
+application_window.py:1: docstring
+application_window.py:30: import
+application_window.py:93: комментарий-пример в docstring
+main_window_app.py:1: docstring
+main_window_app.py:23: комментарий с python -c
+main_window_app.py:62: prog=
+main_window_app.py:126: from ... import (example_runner)
+main_window_app.py:179: from ... import ApplicationWindow
+main_window_app.py:201: from ... import ApplicationWindow
+window_app.ui:3: комментарий XML
+ИТОГО: 11 вхождений
+
+edit replace_all=true в 4 файлах: __init__.py, application_window.py,
+main_window_app.py, window_app.ui (example_runner.py не содержал
+имени пакета — пропущен).
+
+grep -n ex_window_app_ttkbootstrap ex_window_app_customtkinter/ (ПОСЛЕ замены):
+No matches found
+
+grep -n ex_window_app_customtkinter ex_window_app_customtkinter/ (ПОСЛЕ замены):
+__init__.py:1
+application_window.py:1, 30, 93
+main_window_app.py:1, 23, 62, 126, 179, 201
+window_app.ui:3
+ИТОГО: 11 вхождений
+
+=== шаг 4: удаление __pycache__ ===
+ls ex_window_app_customtkinter/__pycache__/ (ДО):
+application_window.cpython-312.pyc
+example_runner.cpython-312.pyc
+__init__.cpython-312.pyc
+main_window_app.cpython-312.pyc
+
+$ rm -rf ex_window_app_customtkinter/__pycache__
+exit=0
+
+ls ex_window_app_customtkinter/ (ПОСЛЕ):
+__init__.py, application_window.py, example_runner.py,
+main_window_app.py, window_app.ui, log/
+(__pycache__ отсутствует)
+
+=== шаг 5: финальный checkpoint ===
+
+[1] uv run ruff check ex_window_app_customtkinter/
+---
+All checks passed!
+exit=0
+
+[2] uv run python -c "from ex_window_app_customtkinter.example_runner import list_examples, run_example; print([e.example_id for e in list_examples()])"
+---
+['async_context_var', 'valid_bracket', 'zip_operations', 'metaclass_vars', 'multiprocessing_demo']
+exit=0
+
+[3] uv run python -c "from ex_window_app_customtkinter.application_window import ApplicationWindow; print('import ok')"
+---
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File ".../ex_window_app_customtkinter/application_window.py", line 28, in <module>
+    import ttkbootstrap
+ModuleNotFoundError: No module named 'ttkbootstrap'
+exit=1   <-- EXPECTED FAIL: фаза 4 заменит ttkbootstrap на customtkinter
+
+[4] uv run python -c "import ex_window_app_customtkinter.main_window_app; print('import ok')"
+---
+import ok
+exit=0
+
+[5] grep -R "ex_window_app_ttkbootstrap" ex_window_app_customtkinter/ && echo FOUND || echo CLEAN
+---
+CLEAN
+exit=0
+

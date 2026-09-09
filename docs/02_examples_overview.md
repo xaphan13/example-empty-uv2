@@ -60,15 +60,15 @@ python -m ex_code_war.main_code_war
 python -m ex_all_others.main_others
 ```
 
-#### GUI на ttkbootstrap + pygubu
+#### GUI на CustomTkinter + pygubu
 ```bash
-python -m ex_window_app_ttkbootstrap.main_window_app
+python -m ex_window_app_customtkinter.main_window_app
 ```
 
 Headless-проверки (без открытия окна):
 ```bash
-python -m ex_window_app_ttkbootstrap.main_window_app --smoke [имя_примера]
-python -m ex_window_app_ttkbootstrap.main_window_app --smoke-window [секунды]
+python -m ex_window_app_customtkinter.main_window_app --smoke [имя_примера]
+python -m ex_window_app_customtkinter.main_window_app --smoke-window [секунды]
 ```
 
 > Замечание: обычный запуск открывает окно и блокирует терминал до закрытия.
@@ -138,24 +138,41 @@ python -m ex_window_app_ttkbootstrap.main_window_app --smoke-window [секун�
 - Работа с глобальными переменными и модулями (`glob_mod`)
 - Работа с диспатчерами и обработчиками событий
 
-### ex_window_app_ttkbootstrap
-Оконное GUI-приложение на базе `tkinter` + `ttkbootstrap` (тёмные темы) с интерфейсом,
-загружаемым из `.ui`-файла Pygubu (`window_app.ui`); точка входа —
-`ex_window_app_ttkbootstrap/main_window_app.py`:
+### ex_window_app_customtkinter
+Оконное GUI-приложение на базе `CustomTkinter` (CTk-виджеты поверх Tkinter) с
+тёмной темой и контрастной палитрой Tokyo Night; интерфейс загружается из
+`.ui`-файла Pygubu (`window_app.ui`) через плагин `pygubu.plugins.customtkinter`,
+точка входа — `ex_window_app_customtkinter/main_window_app.py`:
+- Раскладка (окно 900×600): **сайдбар слева** с заголовком «Примеры», полем
+  поиска, счётчиком «Найдено: N из 5» и `CTkScrollableFrame` со списком из 5
+  карточек-примеров; **контент справа** заполнен секциями сверху вниз —
+  шапка выбранного примера (крупный заголовок + описание), панель опций
+  (свитчи «Очистка перед запуском», «Автопрокрутка вывода»), ряд из трёх
+  мини-карточек-метрик («Примеров в реестре», «Последний запуск», «Статус»),
+  панель вывода («терминал», моноширинный шрифт), панель кнопок
+  («Запустить» — акцентная, «Очистить», «Копировать»), прогресс-индикатор и
+  статусная строка.
+- Выбор примера — кликом по карточке в сайдбаре: выбранная карточка
+  подсвечивается акцентным бордюром, шапка контента обновляется; комбобокс
+  выбора не используется.
+- Тема фиксируется в коде: `ctk.set_appearance_mode("Dark")` +
+  `ctk.set_default_color_theme("blue")`; цвета виджетов заданы явно
+  (акцент `#7aa2f7`, панели `#292e42`, терминал `#101017`); переключатель
+  тем не предусмотрен.
 - Запуск курируемых примеров проекта (`ex_async_simple`, `ex_code_war`,
-  `ex_file_zip`, `ex_metaclass`, `ex_work_process`) прямо из окна.
-- Захват `stdout`/`stderr` и записей логирования в текстовое поле
+  `ex_file_zip`, `ex_metaclass`, `ex_work_process`) прямо из окна: захват
+  `stdout`/`stderr` и записей логирования в текстовое поле
   (`example_runner.run_example`).
-- Список тёмных тем ttkbootstrap (`darkly`, `superhero`, `cyborg`, `solar`,
-  `vapor`) с переключением на лету; стартовая тема — `darkly`.
 - Запуск примера в фоновом потоке с прогресс-индикатором и доставкой
-  вывода в UI через очередь (`threading` + `queue` + `window.after`).
+  вывода в UI через очередь (`threading` + `queue` + `window.after`);
+  поведение настраивается свитчами (очистка перед запуском, автопрокрутка).
 - Headless-режимы для проверок:
-  - `--smoke [имя]` — без создания окна вызывает раннер и печатает захваченный
-    вывод в stdout (для qa-пачек curl-стиля);
+  - `--smoke [имя]` — без создания окна вызывает раннер и печатает
+    захваченный вывод в stdout (для qa-пачек curl-стиля);
   - `--smoke-window [сек]` — собирает окно и закрывает его через N секунд,
     используется под `xvfb-run` для полного smoke без ручного закрытия.
-- Не входит в пакетный запуск `main.py` — открытое окно заблокировало бы общий прогон.
+- Не входит в пакетный запуск `main.py` — открытое окно заблокировало бы
+  общий прогон.
 
 ## Требования к запуску
 

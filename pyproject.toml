@@ -13,8 +13,9 @@ dependencies = [
     "sshtunnel==0.4.0",
     "streamz==0.6.5",
     "aiosqlite>=0.22.1",
-    "ttkbootstrap>=2.2.2",
     "pygubu>=0.42.1",
+    "customtkinter>=5.2.0",
+    "pillow>=12.3.0",
 ]
 
 

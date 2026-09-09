@@ -1,4 +1,4 @@
-"""Точка входа пакета `ex_window_app_ttkbootstrap` и headless-smoke.
+"""Точка входа пакета `ex_window_app_customtkinter` и headless-smoke.
 
 Модуль даёт три режима запуска:
 
@@ -6,7 +6,7 @@
    `mainloop()`. Это обычный пользовательский сценарий.
 
 2. `--smoke [name]` — headless-проверка реестра примеров. Импортируется
-   только `example_runner` (без `tkinter`/`ttkbootstrap`/`pygubu`),
+   только `example_runner` (без `tkinter`/`customtkinter`/`pygubu`),
    вызывается `run_example(name)`, результат печатается в stdout,
    процесс завершается с кодом 0. Если `name` не указан — берётся
    первый пример из реестра (`list_examples()[0].example_id`). Если
@@ -20,7 +20,7 @@
 
 Импорт модуля не создаёт ни одного GUI-объекта: `ApplicationWindow`
 импортируется лениво внутри `main()` и только в тех ветках, где он
-действительно нужен. Это позволяет `python -c "import ex_window_app_ttkbootstrap.main_window_app"`
+действительно нужен. Это позволяет `python -c "import ex_window_app_customtkinter.main_window_app"`
 работать без дисплея и без побочных эффектов (грабля из AGENTS.md).
 """
 
@@ -51,6 +51,34 @@ _DEFAULT_SMOKE_WINDOW_SECONDS: float = 5.0
 # ------------------------------------------------------------------------
 # Парсинг аргументов
 # ------------------------------------------------------------------------
+def _positive_float(raw: str) -> float:
+    """Argparse type-функция: парсит строку в float > 0.
+
+    Требует СТРОГО положительное значение: ноль и отрицательные числа
+    не имеют смысла для «задержки перед закрытием окна» и должны
+    отсекаться argparse с понятным сообщением и exit=2 (а не
+    молча превращаться в 1 мс через `max(1, ...)`, см. DEF-003).
+    `float(raw)` сам поднимает `ValueError` при нечисловой строке —
+    argparse превращает его в `ArgumentTypeError` с сообщением
+    "invalid float value: '...'", что совпадает с нашим сообщением
+    форматом.
+    """
+    try:
+        value = float(raw)
+    except ValueError:
+        # Перевыбрасываем как `argparse.ArgumentTypeError` — argparse
+        # печатает его с префиксом `error: argument --smoke-window:`
+        # и завершает процесс с exit=2.
+        raise argparse.ArgumentTypeError(
+            f"invalid float value: {raw!r}"
+        )
+    if value <= 0:
+        raise argparse.ArgumentTypeError(
+            f"значение должно быть числом > 0 (получено {raw!r})"
+        )
+    return value
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Сконструировать парсер аргументов CLI.
 
@@ -59,9 +87,9 @@ def _build_parser() -> argparse.ArgumentParser:
     и без импорта GUI-модулей.
     """
     parser = argparse.ArgumentParser(
-        prog="python -m ex_window_app_ttkbootstrap.main_window_app",
+        prog="python -m ex_window_app_customtkinter.main_window_app",
         description=(
-            "Запуск GUI-примера на ttkbootstrap + pygubu. "
+            "Запуск GUI-примера на CustomTkinter + pygubu. "
             "Без флагов открывает окно; --smoke запускает пример "
             "headless; --smoke-window поднимает окно под Xvfb и "
             "закрывает его автоматически."
@@ -97,13 +125,19 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--smoke-window",
         nargs="?",
-        type=float,
+        # `type=_positive_float`: отсекает мусор (`abc`, `-5`, `0`)
+        # с понятным сообщением и exit=2, закрывая DEF-003. До этого
+        # `type=float` пропускал `-5` и `-5 * 1000 = -5000` зажимался
+        # в `max(1, ...)` до 1 мс — окно поднималось и мгновенно
+        # закрывалось без предупреждения.
+        type=_positive_float,
         const=_DEFAULT_SMOKE_WINDOW_SECONDS,
         default=False,
         metavar="SECONDS",
         help=(
             "Поднять окно и закрыть его автоматически через SECONDS "
-            "секунд (по умолчанию 5.0). Используется под xvfb-run."
+            "секунд (по умолчанию 5.0; должно быть > 0). "
+            "Используется под xvfb-run."
         ),
     )
     return parser
@@ -123,7 +157,7 @@ def _run_smoke(name: str | None) -> int:
     """
     # Импорт локально, чтобы ветка GUI не тащила runner в память
     # и наоборот. У `example_runner` нет побочных GUI-эффектов.
-    from ex_window_app_ttkbootstrap.example_runner import (
+    from ex_window_app_customtkinter.example_runner import (
         list_examples,
         run_example,
     )
@@ -176,7 +210,7 @@ def _run_smoke_window(seconds: float) -> int:
     точности на пятисекундном smoke избыточна.
     """
     # Импорт локально — см. соглашение в `_run_smoke`.
-    from ex_window_app_ttkbootstrap.application_window import ApplicationWindow
+    from ex_window_app_customtkinter.application_window import ApplicationWindow
 
     app = ApplicationWindow()
     delay_ms = max(1, int(round(seconds * 1000)))
@@ -198,7 +232,7 @@ def _run_gui() -> int:
     возвращается сюда, и мы выходим с кодом 0. Нештатные исключения
     из GUI-кода не маскируются — пусть падают с ненулевым кодом.
     """
-    from ex_window_app_ttkbootstrap.application_window import ApplicationWindow
+    from ex_window_app_customtkinter.application_window import ApplicationWindow
 
     app = ApplicationWindow()
     app.window.mainloop()

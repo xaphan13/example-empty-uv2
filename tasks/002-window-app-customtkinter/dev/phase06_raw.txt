@@ -1,0 +1,33 @@
+customtkinter 6.0.0
+pillow 12.3.0
+pygubu 0.42.1
+    "pygubu>=0.42.1",
+    "customtkinter>=5.2.0",
+    "pillow>=12.3.0",
+    "pygubu-designer>=0.46.1",
+=== checkpoint 01_project_structure: имя пакета ===
+exit=0
+=== checkpoint 02_examples_overview: команда запуска ===
+exit=0
+=== checkpoint 01_project_structure: customtkinter ===
+exit=0
+=== checkpoint 01_project_structure: НЕ должно быть ttkbootstrap ===
+exit=1 (ожидание 1)
+=== checkpoint 02_examples_overview: НЕ должно быть ttkbootstrap ===
+exit=1 (ожидание 1)
+=== широкая проверка: ttkbootstrap в обоих файлах ===
+docs/02_examples_overview.md:155:  `ctk.set_default_color_theme("blue")`; переключатель тем ttkbootstrap
+exit=0 (ожидание 1)
+=== финальные checkpoint-ы ===
+[1] grep -q ex_window_app_customtkinter docs/01_project_structure.md
+exit=0 (нужно 0)
+[2] grep -q ex_window_app_customtkinter/main_window_app.py docs/02_examples_overview.md
+exit=0 (нужно 0)
+[3] grep -q customtkinter docs/01_project_structure.md
+exit=0 (нужно 0)
+[4] ! grep -q ex_window_app_ttkbootstrap docs/01_project_structure.md
+exit=1 (нужно 1)
+[5] ! grep -q ex_window_app_ttkbootstrap docs/02_examples_overview.md
+exit=1 (нужно 1)
+=== широкая проверка: подстрока ttkbootstrap ===
+exit=1 (нужно 1)

@@ -1,0 +1,25 @@
+uv run ruff check ex_window_app_customtkinter/
+All checks passed!
+
+DISPLAY=:99 uv run python -m ex_window_app_customtkinter.main_window_app --smoke-window 5
+exit=0
+
+uv run python -m ex_window_app_customtkinter.main_window_app --smoke valid_bracket
+2026-09-09 19:00:10 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-09 19:00:10 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-09 19:00:10 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 19:00:10 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-09 19:00:10 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+exit=0
+
+uv run python -m ex_window_app_customtkinter.main_window_app --smoke-window -5
+exit=2
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: значение должно быть числом > 0 (получено '-5')
+
+uv run python -m ex_window_app_customtkinter.main_window_app --smoke-window 0
+exit=2
+usage: python -m ex_window_app_customtkinter.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_customtkinter.main_window_app: error: argument --smoke-window: значение должно быть числом > 0 (получено '0')

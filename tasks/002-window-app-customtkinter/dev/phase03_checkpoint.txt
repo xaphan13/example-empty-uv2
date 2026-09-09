@@ -1,0 +1,18 @@
+--- FINAL checkpoint ---
+[1/4] ET.parse:
+xml ok
+[2/4] pygubu Builder under Xvfb (canonical):
+ui loaded
+[3/4] pygubu Builder headless (no Xvfb):
+ui loaded
+[4/4] ruff on package:
+All checks passed!
+--- counts ---
+CTkFrame widgets: 8
+CTkLabel widgets: 12
+CTkButton widgets: 2
+CTkEntry widgets: 1
+CTkTextbox widgets: 1
+CTkProgressBar widgets: 1
+CTkScrollableFrame widgets: 1
+Total customtkinter objects: 26
