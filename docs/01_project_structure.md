@@ -89,6 +89,12 @@ example-empty-uv2/
         ├── deep_copy_example.py
         ├── closure_func.py
         └── __init__.py
+    └── ex_window_app_ttkbootstrap/  # GUI-пример на ttkbootstrap + pygubu
+        ├── main_window_app.py   # Точка входа, парсит --smoke / --smoke-window
+        ├── application_window.py # Класс ApplicationWindow, загрузка .ui, обработчики
+        ├── example_runner.py    # Реестр примеров, запуск с захватом вывода
+        ├── window_app.ui        # XML-разметка Pygubu
+        └── __init__.py
 ```
 
 ## Зависимости
@@ -100,6 +106,11 @@ example-empty-uv2/
 - sshtunnel==0.4.0 - SSH туннелирования
 - streamz==0.6.5 - потоковая обработка данных
 - aiosqlite>=0.22.1 - асинхронный SQLite
+- ttkbootstrap - тёмные темы оформления для Tk (используется в ex_window_app_ttkbootstrap)
+- pygubu - загрузка XML-разметки интерфейса (используется в ex_window_app_ttkbootstrap)
+
+Dev-зависимости (группа dev в pyproject.toml):
+- pygubu-designer - визуальный дизайнер .ui-файлов для Pygubu
 
 ## Инварианты окружения
 

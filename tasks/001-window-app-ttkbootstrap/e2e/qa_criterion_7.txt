@@ -1,0 +1,5 @@
+=== CRITERION 7: xvfb-run -a uv run python -m ex_window_app_ttkbootstrap.main_window_app --smoke-window 5 ===
+$ xvfb-run -a uv run python -m ex_window_app_ttkbootstrap.main_window_app --smoke-window 5
+exit7=0  duration=6s
+Никакого вывода на stdout/stderr — программа тихо создала окно под Xvfb, отработала 5 секунд,
+закрылась по window.after(). Без traceback, exit 0 — PASS

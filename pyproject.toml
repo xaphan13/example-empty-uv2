@@ -13,6 +13,8 @@ dependencies = [
     "sshtunnel==0.4.0",
     "streamz==0.6.5",
     "aiosqlite>=0.22.1",
+    "ttkbootstrap>=2.2.2",
+    "pygubu>=0.42.1",
 ]
 
 
@@ -62,3 +64,8 @@ exclude = '''
   | dist
 )/
 '''
+
+[dependency-groups]
+dev = [
+    "pygubu-designer>=0.46.1",
+]

@@ -1,0 +1,5 @@
+$ uv run python -c "from ex_window_app_ttkbootstrap.example_runner import run_example; out = run_example('valid_bracket'); lines = out.splitlines(); print('lines:', len(lines)); print(*lines[:3], sep='\n')"
+lines: 5
+2026-09-08 23:29:03 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-08 23:29:03 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-08 23:29:03 [INFO] OnlyFile: inn() - res = (True, '({[]})')

@@ -1,0 +1,13 @@
+instance ok
+window type: App
+main_frame type: Frame
+example combobox values head: ('Async: ContextVar в задачах', 'Code War: проверка скобочных последовательностей')
+theme combobox values: ('darkly', 'superhero', 'cyborg', 'solar', 'vapor')
+theme default: darkly
+status: Готово
+progressbar mode: indeterminate
+filter=zip -> ['ZIP: запись и чтение архивов']
+filter cleared -> ['Async: ContextVar в задачах', 'Code War: проверка скобочных последовательностей']
+theme changed to cyborg -> style theme_use works
+output after append: 'hello\nworld\n'
+destroyed

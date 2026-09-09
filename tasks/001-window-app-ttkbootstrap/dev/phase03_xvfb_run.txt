@@ -1,0 +1,12 @@
+# Под Xvfb, happy path через воркер (valid_bracket)
+# status: Завершено; output содержит 5 лог-записей от примера.
+
+status: Завершено
+isValid in output: False
+output first 5 lines:
+  === Запуск: Code War: проверка скобочных последовательностей (valid_bracket) ===
+  2026-09-08 23:33:38 [INFO] OnlyFile: '****' main_code_war - 'start'
+  2026-09-08 23:33:38 [INFO] OnlyFile: '****' run_valid - 'start'
+  2026-09-08 23:33:38 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+  2026-09-08 23:33:38 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+happy path OK

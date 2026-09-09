@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Pygubu-разметка главного окна ex_window_app_ttkbootstrap.
+
+    Корень — `ttk.Frame` с id `main_frame`, который фаза 3
+    встраивает в `ttkbootstrap.Window` через `Builder.get_object`.
+    Все дочерние виджеты имеют стабильные id — на них завязан
+    класс `ApplicationWindow` (фаза 3).
+
+    Раскладка — grid 2xN:
+      - столбец 0: блок управления (combobox'ы, фильтр, кнопки);
+      - столбец 1: текстовое поле вывода со скроллбаром.
+      - нижняя строка: progressbar + status_label — общая на всю ширину.
+-->
+<interface>
+  <requires lib="tk"/>
+  <requires lib="ttk"/>
+  <object class="ttk.Frame" id="main_frame" name="main_frame">
+    <property name="padding">8</property>
+    <property name="height">480</property>
+    <property name="width">720</property>
+    <layout>
+      <property name="column">0</property>
+      <property name="row">0</property>
+      <property name="sticky">nsew</property>
+    </layout>
+    <child>
+      <object class="ttk.Frame" id="control_frame" name="control_frame">
+        <property name="padding">4</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="example_label" name="example_label">
+            <property name="text">Пример:</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="example_combobox" name="example_combobox">
+            <property name="state">readonly</property>
+            <property name="values"></property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">0</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="theme_label" name="theme_label">
+            <property name="text">Тема:</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">1</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="theme_combobox" name="theme_combobox">
+            <property name="state">readonly</property>
+            <property name="values"></property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">1</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="filter_label" name="filter_label">
+            <property name="text">Фильтр:</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">2</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Entry" id="filter_entry" name="filter_entry">
+            <layout>
+              <property name="column">1</property>
+              <property name="row">2</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="run_button" name="run_button">
+            <property name="text">Запустить</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">3</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="clear_button" name="clear_button">
+            <property name="text">Очистить</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">3</property>
+              <property name="sticky">ew</property>
+            </layout>
+          </object>
+        </child>
+        <layout_manager>
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="sticky">nsw</property>
+        </layout_manager>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="output_frame" name="output_frame">
+        <property name="padding">4</property>
+        <child>
+          <object class="tk.Text" id="output_text" name="output_text">
+            <property name="height">20</property>
+            <property name="width">80</property>
+            <property name="wrap">word</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="row">0</property>
+              <property name="sticky">nsew</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Scrollbar" id="output_scroll" name="output_scroll">
+            <property name="orient">vertical</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="row">0</property>
+              <property name="sticky">ns</property>
+            </layout>
+          </object>
+        </child>
+        <layout>
+          <property name="column">1</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Progressbar" id="progressbar" name="progressbar">
+        <property name="mode">indeterminate</property>
+        <property name="orient">horizontal</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="columnspan">2</property>
+          <property name="row">1</property>
+          <property name="sticky">ew</property>
+        </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Label" id="status_label" name="status_label">
+        <property name="text">Готово</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="columnspan">2</property>
+          <property name="row">2</property>
+          <property name="sticky">ew</property>
+        </layout>
+      </object>
+    </child>
+    <layout_manager>
+      <property name="geometry">720x480</property>
+      <property name="grid">y</property>
+      <property name="row_weights">{0: 1, 1: 0, 2: 0}</property>
+      <property name="column_weights">{0: 0, 1: 1}</property>
+    </layout_manager>
+  </object>
+</interface>

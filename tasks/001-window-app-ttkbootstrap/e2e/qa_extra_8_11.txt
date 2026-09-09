@@ -1,0 +1,41 @@
+=== EXTRA 8: --smoke для остальных 4 id ===
+--- smoke async_context_var ---
+2026-09-08 23:44:15 [INFO] OnlyFile: task-3: cont_var= val-3
+2026-09-08 23:44:15 [WARNING] OnlyFile: task-2 ->'copy_context' : cont_var = set in task-2
+2026-09-08 23:44:15 [WARNING] OnlyFile: task-3 ->'copy_context' : cont_var = set in task-3
+2026-09-08 23:44:15 [WARNING] OnlyFile: MAIN ->'copy_context' : cont_var = val-4
+exit_async_context_var=0  (PASS)
+--- smoke zip_operations ---
+2026-09-08 23:44:15 [INFO] OnlyFile: '****' main_file_zip - 'start'
+2026-09-08 23:44:15 [INFO] OnlyFile: read_bytes=b'{"a": "1", "b": "2", "method": "writestr"}'
+ read_text='{"a": "1", "b": "2", "method": "writestr"}'
+2026-09-08 23:44:15 [INFO] OnlyFile: data_json={'a': '1', 'b': '2', 'method': 'writestr'}
+exit_zip_operations=0  (PASS)
+--- smoke metaclass_vars ---
+2026-09-08 23:44:15 [INFO] OnlyFile: FUNC.co_varnames: ('y',)
+2026-09-08 23:44:15 [INFO] OnlyFile: FUNC.co_cellvars: ()
+2026-09-08 23:44:15 [INFO] OnlyFile: ###'frame'.f_locals### 'func_global'  {'y': 7}
+exit_metaclass_vars=0  (PASS)
+--- smoke multiprocessing_demo ---
+2026-09-08 23:44:15 [INFO] multi_logger: В главном процессе: Число 111111111 успешно обработано. Найдено делителей: 12.
+2026-09-08 23:44:15 [INFO] multi_logger: В главном процессе: Число 999999999 успешно обработано. Найдено делителей: 20.
+2026-09-08 23:44:15 [INFO] multi_logger: В главном процессе: Число 2147483647 успешно обработано. Найдено делителей: 2.
+2026-09-08 23:44:15 [INFO] multi_logger: Демо завершено. Общее время выполнения всех задач составило: 0.0355 секунд.
+exit_multiprocessing_demo=0  (PASS)
+
+Все 4 запуска: exit 0, вывод непустой, без traceback — PASS
+
+=== EXTRA 9: --smoke nonexistent_xyz ===
+stderr: "Unknown example id: 'nonexistent_xyz'. Known ids: async_context_var, metaclass_vars, multiprocessing_demo, valid_bracket, zip_operations"
+exit9=2
+exit != 0, есть осмысленное сообщение об ошибке в stderr — PASS
+
+=== EXTRA 10: uv run ruff check . (весь проект) ===
+All checks passed!
+exit10=0
+Регресс по ruff чистый — PASS
+
+=== EXTRA 11: регресс соседних примеров ===
+--- uv run python -m ex_code_war.main_code_war --- exit11a=0
+--- uv run python -m ex_async_simple.main_async_simple --- exit11b=0
+Оба завершаются с exit 0, без traceback — PASS

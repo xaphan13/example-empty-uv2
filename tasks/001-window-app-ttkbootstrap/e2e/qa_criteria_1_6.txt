@@ -1,0 +1,40 @@
+=== CRITERION 1: uv run python -c "import ttkbootstrap, pygubu" ===
+exit1_exact=0  (точная команда из REQUIREMENTS.md, exit 0)
+ttkbootstrap= 2.2.2 ; pygubu= 0.42.1 (через importlib.metadata — у pygubu нет атрибута __version__,
+              это особенность библиотеки, не дефект пакета)
+=== CRITERION 2: uv run ruff check ex_window_app_ttkbootstrap/ ===
+All checks passed!
+exit2=0
+=== CRITERION 3: uv run python -m ex_window_app_ttkbootstrap.main_window_app --smoke valid_bracket ===
+2026-09-08 23:43:36 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-08 23:43:36 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-08 23:43:36 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-08 23:43:36 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-08 23:43:36 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+exit3=0
+Содержит "res = (True, ..." — PASS
+=== CRITERION 4: Builder().add_from_file('ex_window_app_ttkbootstrap/window_app.ui') ===
+ui ok
+exit4=0
+=== CRITERION 5: from ex_window_app_ttkbootstrap.application_window import ApplicationWindow ===
+import ok
+exit5=0
+Окно не создаётся, импорт headless — PASS
+=== CRITERION 6: grep -rn "ex_window_app_ttkbootstrap" docs/ ===
+docs/01_project_structure.md:92:    └── ex_window_app_ttkbootstrap/  # GUI-пример на ttkbootstrap + pygubu
+docs/01_project_structure.md:109:- ttkbootstrap - тёмные темы оформления для Tk (используется в ex_window_app_ttkbootstrap)
+docs/01_project_structure.md:110:- pygubu - загрузка XML-разметки интерфейса (используется в ex_window_app_ttkbootstrap)
+docs/02_examples_overview.md:65:python -m ex_window_app_ttkbootstrap.main_window_app
+docs/02_examples_overview.md:70:python -m ex_window_app_ttkbootstrap.main_window_app --smoke [имя_примера]
+docs/02_examples_overview.md:71:python -m ex_window_app_ttkbootstrap.main_window_app --smoke-window [секунды]
+docs/02_examples_overview.md:141:### ex_window_app_ttkbootstrap
+docs/02_examples_overview.md:144:`ex_window_app_ttkbootstrap/main_window_app.py`:
+ec6a=0
+=== grep -rn "main_window_app" docs/ ===
+docs/01_project_structure.md:93:        ├── main_window_app.py   # Точка входа, парсит --smoke / --smoke-window
+docs/02_examples_overview.md:65:python -m ex_window_app_ttkbootstrap.main_window_app
+docs/02_examples_overview.md:70:python -m ex_window_app_ttkbootstrap.main_window_app --smoke [имя_примера]
+docs/02_examples_overview.md:71:python -m ex_window_app_ttkbootstrap.main_window_app --smoke-window [секунды]
+docs/02_examples_overview.md:144:`ex_window_app_ttkbootstrap/main_window_app.py`:
+ec6b=0
+Оба grep находят строки — PASS

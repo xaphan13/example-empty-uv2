@@ -1,0 +1,9 @@
+=== grep -n ex_window_app_ttkbootstrap docs/01_project_structure.md ===
+92:    └── ex_window_app_ttkbootstrap/  # GUI-пример на ttkbootstrap + pygubu
+109:- ttkbootstrap - тёмные темы оформления для Tk (используется в ex_window_app_ttkbootstrap)
+110:- pygubu - загрузка XML-разметки интерфейса (используется в ex_window_app_ttkbootstrap)
+exit=0
+
+=== grep -n main_window_app.py docs/02_examples_overview.md ===
+144:`ex_window_app_ttkbootstrap/main_window_app.py`:
+exit=0

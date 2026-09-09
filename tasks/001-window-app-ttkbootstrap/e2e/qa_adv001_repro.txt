@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_ttkbootstrap/main_window_app.py", line 251, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_ttkbootstrap/main_window_app.py", line 240, in main
+    return _run_smoke_window(float(seconds))
+                             ^^^^^^^^^^^^^^
+ValueError: could not convert string to float: 'abc'
+exit=1
+===== second case =====
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_ttkbootstrap/main_window_app.py", line 251, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/max/0_0_26_new_one/example-empty-uv2/ex_window_app_ttkbootstrap/main_window_app.py", line 240, in main
+    return _run_smoke_window(float(seconds))
+                             ^^^^^^^^^^^^^^
+ValueError: could not convert string to float: '5x'
+exit=1

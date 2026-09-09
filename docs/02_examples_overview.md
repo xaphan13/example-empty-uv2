@@ -60,6 +60,20 @@ python -m ex_code_war.main_code_war
 python -m ex_all_others.main_others
 ```
 
+#### GUI на ttkbootstrap + pygubu
+```bash
+python -m ex_window_app_ttkbootstrap.main_window_app
+```
+
+Headless-проверки (без открытия окна):
+```bash
+python -m ex_window_app_ttkbootstrap.main_window_app --smoke [имя_примера]
+python -m ex_window_app_ttkbootstrap.main_window_app --smoke-window [секунды]
+```
+
+> Замечание: обычный запуск открывает окно и блокирует терминал до закрытия.
+> GUI-пример намеренно не включён в `main.py` (окно заблокировало бы прогон).
+
 ## Краткое описание каждого примера
 
 ### ex_work_process
@@ -123,6 +137,25 @@ python -m ex_all_others.main_others
 - Различные утилиты и вспомогательные функции (`others_11`, `my_module`)
 - Работа с глобальными переменными и модулями (`glob_mod`)
 - Работа с диспатчерами и обработчиками событий
+
+### ex_window_app_ttkbootstrap
+Оконное GUI-приложение на базе `tkinter` + `ttkbootstrap` (тёмные темы) с интерфейсом,
+загружаемым из `.ui`-файла Pygubu (`window_app.ui`); точка входа —
+`ex_window_app_ttkbootstrap/main_window_app.py`:
+- Запуск курируемых примеров проекта (`ex_async_simple`, `ex_code_war`,
+  `ex_file_zip`, `ex_metaclass`, `ex_work_process`) прямо из окна.
+- Захват `stdout`/`stderr` и записей логирования в текстовое поле
+  (`example_runner.run_example`).
+- Список тёмных тем ttkbootstrap (`darkly`, `superhero`, `cyborg`, `solar`,
+  `vapor`) с переключением на лету; стартовая тема — `darkly`.
+- Запуск примера в фоновом потоке с прогресс-индикатором и доставкой
+  вывода в UI через очередь (`threading` + `queue` + `window.after`).
+- Headless-режимы для проверок:
+  - `--smoke [имя]` — без создания окна вызывает раннер и печатает захваченный
+    вывод в stdout (для qa-пачек curl-стиля);
+  - `--smoke-window [сек]` — собирает окно и закрывает его через N секунд,
+    используется под `xvfb-run` для полного smoke без ручного закрытия.
+- Не входит в пакетный запуск `main.py` — открытое окно заблокировало бы общий прогон.
 
 ## Требования к запуску
 

@@ -1,0 +1,28 @@
+=== CASE 1: --smoke-window abc ===
+usage: python -m ex_window_app_ttkbootstrap.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_ttkbootstrap.main_window_app: error: argument --smoke-window: invalid float value: 'abc'
+exit=2
+
+=== CASE 2: --smoke-window 5x ===
+usage: python -m ex_window_app_ttkbootstrap.main_window_app
+       [-h] [--smoke [NAME]] [--smoke-window [SECONDS]]
+python -m ex_window_app_ttkbootstrap.main_window_app: error: argument --smoke-window: invalid float value: '5x'
+exit=2
+
+=== CASE 3: ruff check ===
+All checks passed!
+exit=0
+
+=== CASE 4: --smoke valid_bracket (default window) ===
+2026-09-08 23:54:01 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-08 23:54:01 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+
+exit=0
+
+=== CASE 5: --smoke valid_bracket --smoke-window 3 (mutex) ===
+Ошибка: --smoke и --smoke-window нельзя использовать одновременно.
+exit=2
+
+=== CASE 6: --smoke-window 3 under Xvfb ===
+exit=0

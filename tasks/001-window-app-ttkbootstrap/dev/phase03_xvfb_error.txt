@@ -1,0 +1,12 @@
+# Под Xvfb, error path через воркер (run_example подменён на boom())
+# Все ассерты прошли — статус, вывод, разблокировка UI.
+
+text status: Ошибка
+text output head: === Запуск: Code War: проверка скобочных последовательностей (valid_bracket) ===
+[ОШИБКА]
+Traceback (most recent call la
+button state: normal
+combobox state: readonly
+theme combobox state: readonly
+filter state: normal
+all cget OK

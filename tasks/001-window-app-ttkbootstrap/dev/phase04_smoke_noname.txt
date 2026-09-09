@@ -1,0 +1,9 @@
+2026-09-08 23:38:39 [INFO] OnlyFile: '****' run_simple_demo - 'start'
+2026-09-08 23:38:39 [WARNING] OnlyFile: MAIN ->'copy_context' : cont_var = val-1
+2026-09-08 23:38:39 [WARNING] OnlyFile: MAIN ->'copy_context' : cont_var = val-4
+2026-09-08 23:38:39 [INFO] OnlyFile: task-2: cont_var= val-2
+2026-09-08 23:38:39 [INFO] OnlyFile: task-3: cont_var= val-3
+2026-09-08 23:38:39 [WARNING] OnlyFile: task-2 ->'copy_context' : cont_var = set in task-2
+2026-09-08 23:38:39 [WARNING] OnlyFile: task-3 ->'copy_context' : cont_var = set in task-3
+2026-09-08 23:38:39 [WARNING] OnlyFile: MAIN ->'copy_context' : cont_var = val-4
+

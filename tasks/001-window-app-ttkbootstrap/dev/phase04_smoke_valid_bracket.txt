@@ -1,0 +1,6 @@
+2026-09-08 23:38:38 [INFO] OnlyFile: '****' main_code_war - 'start'
+2026-09-08 23:38:38 [INFO] OnlyFile: '****' run_valid - 'start'
+2026-09-08 23:38:38 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-08 23:38:38 [INFO] OnlyFile: inn() - res = (True, '({[]})')
+2026-09-08 23:38:38 [INFO] OnlyFile: inn() - res = (False, '[', '(')
+
