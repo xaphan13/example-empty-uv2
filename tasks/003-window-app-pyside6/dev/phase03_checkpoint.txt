@@ -1,0 +1,18 @@
+=== ruff ===
+All checks passed!
+ruff exit=0
+=== smoke ===
+smoke ok
+smoke exit=0
+=== smoke-window 3 ===
+This plugin does not support propagateSizeHints()
+smoke_window exit=0
+elapsed=4s
+=== smoke-window 0 (expect 2) ===
+usage: python -m ex_window_app_pyside6.main_window_app [-h] [--smoke]
+                                                       [--smoke-window [SECONDS]]
+python -m ex_window_app_pyside6.main_window_app: error: argument --smoke-window: значение должно быть > 0: '0'
+zero exit=2
+=== both flags (expect 2) ===
+Нельзя одновременно использовать --smoke и --smoke-window
+both exit=2

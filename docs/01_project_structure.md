@@ -89,11 +89,15 @@ example-empty-uv2/
         ├── deep_copy_example.py
         ├── closure_func.py
         └── __init__.py
-    └── ex_window_app_customtkinter/  # GUI-пример на CustomTkinter + pygubu
-        ├── main_window_app.py   # Точка входа, парсит --smoke / --smoke-window
-        ├── application_window.py # Класс ApplicationWindow, загрузка .ui, обработчики
-        ├── example_runner.py    # Реестр примеров, запуск с захватом вывода
-        ├── window_app.ui        # XML-разметка Pygubu на CTk-виджетах
+    ├── ex_window_app_customtkinter/  # GUI-пример на CustomTkinter + pygubu
+    │   ├── main_window_app.py   # Точка входа, парсит --smoke / --smoke-window
+    │   ├── application_window.py # Класс ApplicationWindow, загрузка .ui, обработчики
+    │   ├── example_runner.py    # Реестр примеров, запуск с захватом вывода
+    │   ├── window_app.ui        # XML-разметка Pygubu на CTk-виджетах
+    │   └── __init__.py
+    └── ex_window_app_pyside6/   # GUI-пример на PySide6 (Qt6)
+        ├── main_window_app.py   # Точка входа: обычный запуск, --smoke, --smoke-window
+        ├── application_window.py # Класс ApplicationWindow(QWidget) с двумя полями и двумя кнопками
         └── __init__.py
 ```
 

@@ -1,0 +1,11 @@
+Resolved 46 packages in 5.99s
+Downloading pyside6-essentials (76.4MiB)
+Downloading pyside6-addons (167.0MiB)
+ Downloaded pyside6-essentials
+ Downloaded pyside6-addons
+Prepared 4 packages in 37.23s
+Installed 4 packages in 110ms
+ + pyside6==6.11.2
+ + pyside6-addons==6.11.2
+ + pyside6-essentials==6.11.2
+ + shiboken6==6.11.2

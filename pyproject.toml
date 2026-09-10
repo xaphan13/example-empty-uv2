@@ -16,6 +16,7 @@ dependencies = [
     "pygubu>=0.42.1",
     "customtkinter>=5.2.0",
     "pillow>=12.3.0",
+    "pyside6>=6.11.2",
 ]
 
 

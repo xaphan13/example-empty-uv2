@@ -1,0 +1,7 @@
+=== ruff ===
+All checks passed!
+ruff exit=0
+=== checkpoint ===
+application_window name_input message_input show_button clear_button result_label
+ok
+checkpoint exit=0

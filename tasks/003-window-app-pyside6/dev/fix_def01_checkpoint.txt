@@ -1,0 +1,34 @@
+=== ruff ===
+All checks passed!
+ruff exit=0
+=== --smoke-window inf ===
+usage: python -m ex_window_app_pyside6.main_window_app [-h] [--smoke]
+                                                       [--smoke-window [SECONDS]]
+python -m ex_window_app_pyside6.main_window_app: error: argument --smoke-window: значение должно быть > 0: 'inf'
+inf exit=2
+=== --smoke-window nan ===
+usage: python -m ex_window_app_pyside6.main_window_app [-h] [--smoke]
+                                                       [--smoke-window [SECONDS]]
+python -m ex_window_app_pyside6.main_window_app: error: argument --smoke-window: значение должно быть > 0: 'nan'
+nan exit=2
+=== --smoke-window 1e309 ===
+usage: python -m ex_window_app_pyside6.main_window_app [-h] [--smoke]
+                                                       [--smoke-window [SECONDS]]
+python -m ex_window_app_pyside6.main_window_app: error: argument --smoke-window: значение должно быть > 0: '1e309'
+1e309 exit=2
+=== --smoke-window -1 ===
+usage: python -m ex_window_app_pyside6.main_window_app [-h] [--smoke]
+                                                       [--smoke-window [SECONDS]]
+python -m ex_window_app_pyside6.main_window_app: error: argument --smoke-window: значение должно быть > 0: '-1'
+-1 exit=2
+=== --smoke-window abc ===
+usage: python -m ex_window_app_pyside6.main_window_app [-h] [--smoke]
+                                                       [--smoke-window [SECONDS]]
+python -m ex_window_app_pyside6.main_window_app: error: argument --smoke-window: не число: 'abc'
+abc exit=2
+=== --smoke ===
+smoke ok
+smoke exit=0
+=== --smoke-window 3 ===
+This plugin does not support propagateSizeHints()
+window3 exit=0 elapsed=3s
