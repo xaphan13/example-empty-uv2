@@ -1,37 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Pygubu-разметка главного окна ex_window_app_customtkinter (фаза 7: редизайн v2).
+    Pygubu-разметка главного окна ex_window_app_customtkinter (редизайн v3 «Aurora Night»).
 
-    Корневой объект — `customtkinter.CTkFrame` id `main_frame` на тёмном
-    фоне `#1a1b26`. Окно `ctk.CTk()`, `ctk.set_appearance_mode("Dark")` и
+    Корневой объект — `customtkinter.CTkFrame` id `main_frame` на фоне #0b0e14.
+    Окно `ctk.CTk()`, `ctk.set_appearance_mode("Dark")` и
     `ctk.set_default_color_theme("blue")` создаёт код в
-    `application_window.py`; здесь корневой фрейм встраивается в окно
-    через `Builder.get_object('main_frame', master=window)`.
+    `application_window.py`; корневой фрейм встраивается в окно через
+    `Builder.get_object('main_frame', master=window)`.
 
     Раскладка — grid 2 столбца:
-      - столбец 0: сайдбар (sidebar_frame) фиксированной ширины 280 px.
-      - столбец 1: контент (content_frame) растягивается (weight=1).
-    Grid-веса настраиваются кодом (фаза 7 v2); в .ui row/column_weights
-    оставлены для pygubu-designer'а, но рантайм-веса принудительно
-    пересчитываются в `application_window.py.__init__`.
+      - столбец 0: сайдбар (sidebar_frame), ширина задаётся кодом (minsize 320).
+      - столбец 1: контент (content_frame), растягивается (weight=1).
+    Grid-веса надёжнее настраивать кодом (pygubu округляет веса); в
+    `application_window.py.__init__` рантайм-веса пересчитываются явно.
 
-    В сайдбаре сверху вниз: заголовок, поле поиска, счётчик
-    «Найдено: N из 5», CTkScrollableFrame со списком карточек примеров
-    (5 штук: async_context_var, valid_bracket, zip_operations,
-    metaclass_vars, multiprocessing_demo).
+    Сайдбар: бренд-заголовок с бейджем версии, поиск, счётчик,
+    карточки примеров (5 шт.), футер с версиями библиотек.
 
-    В контенте сверху вниз:
-      - шапка (example_title крупным, example_desc);
-      - панель опций (options_frame: clear_before_run_switch, autoscroll_switch);
-      - ряд из трёх метрик (metrics_frame: metric_card_registry,
-        metric_card_last_run, metric_card_status; в каждой label + value);
-      - output_text (растягивается, основная площадь);
-      - панель кнопок (buttons_frame: run_button, clear_button, copy_button);
-      - progressbar;
-      - status_label.
+    Контент (grid 1x9):
+      row 0 — шапка: example_title + example_desc;
+      row 1 — topbar_frame: переключатель темы (CTkSegmentedButton) и
+              выбор акцента (CTkOptionMenu);
+      row 2 — metrics_frame: 4 мини-карточки (Примеров, Запусков, Время, Статус);
+      row 3 — tasks_frame: секция «Симуляция задач» — 3 кнопки-задачи и
+              3 прогрессбара с именами и процентами;
+      row 4 — demo_frame: секция «Демо-виджеты» — 5 кнопок (Тост, Волна,
+              Вспышка, Сброс, Тест) + слайдер скорости со значением;
+      row 5 — output_text («терминал», растягивается, weight=1);
+      row 6 — progressbar (основной);
+      row 7 — buttons_frame: run/clear/copy + два свитча опций терминала
+              (clear_before_run_switch, autoscroll_switch) справа;
+      row 8 — status_label.
 
-    Палитра — Tokyo Night (см. раздел «Цветовая палитра» в дизайн-спецификации
-    REQUIREMENTS.md). Тексты — на русском.
+    «Парящую» кнопку (FAB, круглая, поверх правого нижнего угла) создаёт
+    код через place() — в grid её не положить.
+
+    Палитра v3 «Aurora Night» (тёмная, см. константы в application_window.py):
+      фон приложения #0b0e14, панели #11151f, карточки #171c29,
+      бордеры #272f42, акцент #6d8dff, текст #d7defc, приглушённый #7d87a8.
+    При переключении темы на светлую поверхности перекрашивает код.
 
     Формат составных отступов в `<property name="padx"/"pady">` — `a b`
     через пробел (tkinter не парсит `(a, b)`).
@@ -39,50 +46,88 @@
 <interface>
   <requires lib="customtkinter"/>
   <object class="customtkinter.CTkFrame" id="main_frame" name="main_frame">
-    <property name="fg_color">#1a1b26</property>
+    <property name="fg_color">#0b0e14</property>
     <property name="corner_radius">0</property>
-    <property name="width">900</property>
-    <property name="height">600</property>
+    <property name="width">980</property>
+    <property name="height">640</property>
     <child>
       <!--
-          Сайдбар: фиксированная ширина 280 px, тёмный фон #16161e,
-          скруглённые углы. Содержимое:
-          row 0 — sidebar_title;
+          Сайдбар: панель #11151f, радиус 16. Содержимое:
+          row 0 — бренд-строка (sidebar_title + sidebar_badge);
           row 1 — search_entry;
           row 2 — search_counter;
-          row 3 — cards_scroll (растягивается).
+          row 3 — cards_scroll (растягивается);
+          row 4 — sidebar_footer.
       -->
       <object class="customtkinter.CTkFrame" id="sidebar_frame" name="sidebar_frame">
-        <property name="fg_color">#16161e</property>
-        <property name="corner_radius">12</property>
-        <property name="width">280</property>
+        <property name="fg_color">#11151f</property>
+        <property name="corner_radius">16</property>
+        <property name="width">300</property>
         <child>
-          <object class="customtkinter.CTkLabel" id="sidebar_title" name="sidebar_title">
-            <property name="text">Примеры</property>
-            <property name="font">{Arial} 16 {bold}</property>
-            <property name="text_color">#7aa2f7</property>
+          <!--
+              Бренд-строка: заголовок акцентным цветом + бейдж версии.
+              Бейдж — маленькая «пилюля» с фоном карточки.
+          -->
+          <object class="customtkinter.CTkFrame" id="brand_frame" name="brand_frame">
+            <property name="fg_color">transparent</property>
+            <property name="corner_radius">0</property>
             <layout>
               <property name="row">0</property>
               <property name="column">0</property>
-              <property name="sticky">w</property>
-              <property name="padx">12</property>
-              <property name="pady">12 8</property>
+              <property name="sticky">ew</property>
+              <property name="padx">16</property>
+              <property name="pady">16 10</property>
             </layout>
+            <child>
+              <object class="customtkinter.CTkLabel" id="sidebar_title" name="sidebar_title">
+                <property name="text">◆ Примеры</property>
+                <property name="font">{Arial} 17 {bold}</property>
+                <property name="text_color">#6d8dff</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">0</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">0</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="sidebar_badge" name="sidebar_badge">
+                <property name="text">v3</property>
+                <property name="font">{Arial} 9 {bold}</property>
+                <property name="fg_color">#171c29</property>
+                <property name="text_color">#7d87a8</property>
+                <property name="corner_radius">8</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">1</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">8 0</property>
+                  <property name="pady">2 0</property>
+                </layout>
+              </object>
+            </child>
+            <layout_manager>
+              <property name="grid">x</property>
+              <property name="row_weights">{0: 0}</property>
+              <property name="column_weights">{0: 1, 1: 0}</property>
+            </layout_manager>
           </object>
         </child>
         <child>
           <object class="customtkinter.CTkEntry" id="search_entry" name="search_entry">
             <property name="placeholder_text">Поиск примера...</property>
-            <property name="placeholder_text_color">#565f89</property>
-            <property name="fg_color">#292e42</property>
-            <property name="border_color">#3b4261</property>
-            <property name="text_color">#c0caf5</property>
-            <property name="corner_radius">8</property>
+            <property name="placeholder_text_color">#565f7d</property>
+            <property name="fg_color">#141926</property>
+            <property name="border_color">#272f42</property>
+            <property name="text_color">#d7defc</property>
+            <property name="corner_radius">10</property>
             <layout>
               <property name="row">1</property>
               <property name="column">0</property>
               <property name="sticky">ew</property>
-              <property name="padx">12</property>
+              <property name="padx">14</property>
               <property name="pady">0 8</property>
             </layout>
           </object>
@@ -95,21 +140,21 @@
           <object class="customtkinter.CTkLabel" id="search_counter" name="search_counter">
             <property name="text">Найдено: 5 из 5</property>
             <property name="font">{Arial} 10 {}</property>
-            <property name="text_color">#565f89</property>
+            <property name="text_color">#565f7d</property>
             <layout>
               <property name="row">2</property>
               <property name="column">0</property>
               <property name="sticky">w</property>
-              <property name="padx">14</property>
+              <property name="padx">16</property>
               <property name="pady">0 6</property>
             </layout>
           </object>
         </child>
         <child>
           <!--
-              CTkScrollableFrame: прозрачный фон, без скруглений,
-              занимает всю оставшуюся высоту сайдбара. Карточки-примеры
-              добавляются как row=0..4 внутри этого фрейма.
+              CTkScrollableFrame: прозрачный фон, без скруглений, занимает
+              всю оставшуюся высоту сайдбара. Карточки-примеры раскладываются
+              grid'ом внутри (row 0..4).
           -->
           <object class="customtkinter.CTkScrollableFrame" id="cards_scroll" name="cards_scroll">
             <property name="fg_color">transparent</property>
@@ -118,37 +163,35 @@
               <property name="row">3</property>
               <property name="column">0</property>
               <property name="sticky">nsew</property>
-              <property name="padx">8</property>
+              <property name="padx">10</property>
               <property name="pady">4</property>
             </layout>
             <child>
               <!--
-                  Карточка примера `async_context_var`.
-                  Стили: corner_radius=10, фон #292e42, тонкая рамка #3b4261.
-                  Заголовок и описание — CTkLabel с фиксированными шрифтами.
-                  Текст заголовка/описания задаётся в .ui (соответствует
-                  реестру в `example_runner.py`).
+                  Карточка примера `async_context_var`. Стили: радиус 12,
+                  фон #171c29, бордер #272f42. Hover/selection — код.
               -->
               <object class="customtkinter.CTkFrame" id="card_async_context_var" name="card_async_context_var">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">0</property>
                   <property name="sticky">ew</property>
-                  <property name="pady">4</property>
+                  <property name="pady">3</property>
                 </layout>
                 <child>
                   <object class="customtkinter.CTkLabel" id="card_title_async_context_var" name="card_title_async_context_var">
                     <property name="text">Async: ContextVar в задачах</property>
                     <property name="font">{Arial} 12 {bold}</property>
-                    <property name="text_color">#c0caf5</property>
+                    <property name="text_color">#d7defc</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">10 2</property>
                     </layout>
@@ -158,12 +201,13 @@
                   <object class="customtkinter.CTkLabel" id="card_desc_async_context_var" name="card_desc_async_context_var">
                     <property name="text">ContextVar и asyncio-задачи</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#565f7d</property>
                     <property name="justify">left</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">0 10</property>
                     </layout>
@@ -174,25 +218,26 @@
             <child>
               <!-- Карточка примера `valid_bracket`. -->
               <object class="customtkinter.CTkFrame" id="card_valid_bracket" name="card_valid_bracket">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">1</property>
                   <property name="column">0</property>
                   <property name="sticky">ew</property>
-                  <property name="pady">4</property>
+                  <property name="pady">3</property>
                 </layout>
                 <child>
                   <object class="customtkinter.CTkLabel" id="card_title_valid_bracket" name="card_title_valid_bracket">
                     <property name="text">Code War: проверка скобочных последовательностей</property>
                     <property name="font">{Arial} 12 {bold}</property>
-                    <property name="text_color">#c0caf5</property>
+                    <property name="text_color">#d7defc</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">10 2</property>
                     </layout>
@@ -202,12 +247,13 @@
                   <object class="customtkinter.CTkLabel" id="card_desc_valid_bracket" name="card_desc_valid_bracket">
                     <property name="text">Баланс скобок в строке</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#565f7d</property>
                     <property name="justify">left</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">0 10</property>
                     </layout>
@@ -218,25 +264,26 @@
             <child>
               <!-- Карточка примера `zip_operations`. -->
               <object class="customtkinter.CTkFrame" id="card_zip_operations" name="card_zip_operations">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">2</property>
                   <property name="column">0</property>
                   <property name="sticky">ew</property>
-                  <property name="pady">4</property>
+                  <property name="pady">3</property>
                 </layout>
                 <child>
                   <object class="customtkinter.CTkLabel" id="card_title_zip_operations" name="card_title_zip_operations">
                     <property name="text">ZIP: запись и чтение архивов</property>
                     <property name="font">{Arial} 12 {bold}</property>
-                    <property name="text_color">#c0caf5</property>
+                    <property name="text_color">#d7defc</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">10 2</property>
                     </layout>
@@ -246,12 +293,13 @@
                   <object class="customtkinter.CTkLabel" id="card_desc_zip_operations" name="card_desc_zip_operations">
                     <property name="text">zipfile: создание и чтение</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#565f7d</property>
                     <property name="justify">left</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">0 10</property>
                     </layout>
@@ -262,25 +310,26 @@
             <child>
               <!-- Карточка примера `metaclass_vars`. -->
               <object class="customtkinter.CTkFrame" id="card_metaclass_vars" name="card_metaclass_vars">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">3</property>
                   <property name="column">0</property>
                   <property name="sticky">ew</property>
-                  <property name="pady">4</property>
+                  <property name="pady">3</property>
                 </layout>
                 <child>
                   <object class="customtkinter.CTkLabel" id="card_title_metaclass_vars" name="card_title_metaclass_vars">
                     <property name="text">Metaclass: переменные внутри функций</property>
                     <property name="font">{Arial} 12 {bold}</property>
-                    <property name="text_color">#c0caf5</property>
+                    <property name="text_color">#d7defc</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">10 2</property>
                     </layout>
@@ -290,13 +339,13 @@
                   <object class="customtkinter.CTkLabel" id="card_desc_metaclass_vars" name="card_desc_metaclass_vars">
                     <property name="text">Метакласс и область видимости</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#565f7d</property>
                     <property name="justify">left</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
-                      <property name="padx">12</property>
+                      <property name="sticky">ew</property>
                       <property name="pady">0 10</property>
                     </layout>
                   </object>
@@ -306,25 +355,26 @@
             <child>
               <!-- Карточка примера `multiprocessing_demo`. -->
               <object class="customtkinter.CTkFrame" id="card_multiprocessing_demo" name="card_multiprocessing_demo">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">4</property>
                   <property name="column">0</property>
                   <property name="sticky">ew</property>
-                  <property name="pady">4</property>
+                  <property name="pady">3</property>
                 </layout>
                 <child>
                   <object class="customtkinter.CTkLabel" id="card_title_multiprocessing_demo" name="card_title_multiprocessing_demo">
                     <property name="text">Multiprocessing: Process / Pool / Executor</property>
                     <property name="font">{Arial} 12 {bold}</property>
-                    <property name="text_color">#c0caf5</property>
+                    <property name="text_color">#d7defc</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">10 2</property>
                     </layout>
@@ -334,12 +384,13 @@
                   <object class="customtkinter.CTkLabel" id="card_desc_multiprocessing_demo" name="card_desc_multiprocessing_demo">
                     <property name="text">Process, Pool, Executor</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#565f7d</property>
                     <property name="justify">left</property>
+                    <property name="anchor">w</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
-                      <property name="sticky">w</property>
+                      <property name="sticky">ew</property>
                       <property name="padx">12</property>
                       <property name="pady">0 10</property>
                     </layout>
@@ -349,31 +400,38 @@
             </child>
           </object>
         </child>
+        <child>
+          <object class="customtkinter.CTkLabel" id="sidebar_footer" name="sidebar_footer">
+            <property name="text">CustomTkinter 6.0.0 · pygubu 0.42</property>
+            <property name="font">{Arial} 9 {}</property>
+            <property name="text_color">#3f4763</property>
+            <layout>
+              <property name="row">4</property>
+              <property name="column">0</property>
+              <property name="sticky">w</property>
+              <property name="padx">16</property>
+              <property name="pady">8 12</property>
+            </layout>
+          </object>
+        </child>
         <layout_manager>
           <property name="grid">y</property>
-          <property name="row_weights">{0: 0, 1: 0, 2: 0, 3: 1}</property>
+          <property name="row_weights">{0: 0, 1: 0, 2: 0, 3: 1, 4: 0}</property>
           <property name="column_weights">{0: 0}</property>
         </layout_manager>
       </object>
     </child>
     <child>
       <!--
-          Контент: растягивается по горизонтали, занимает правую часть окна.
-          Раскладка grid 1×7:
-            row 0 — example_title + example_desc (шапка);
-            row 1 — options_frame (свитчи);
-            row 2 — metrics_frame (три мини-карточки);
-            row 3 — output_text (растягивается, weight=1);
-            row 4 — buttons_frame (run/clear/copy);
-            row 5 — progressbar;
-            row 6 — status_label.
+          Контент: панель #11151f, радиус 16, растягивается по X/Y.
+          Раскладка grid 1x9 (см. комментарий к main_frame).
       -->
       <object class="customtkinter.CTkFrame" id="content_frame" name="content_frame">
-        <property name="fg_color">#1f2335</property>
-        <property name="corner_radius">12</property>
+        <property name="fg_color">#11151f</property>
+        <property name="corner_radius">16</property>
         <child>
           <!--
-              Шапка: CTkFrame с двумя label'ами (title крупным + desc).
+              Шапка: заголовок выбранного примера + описание.
               Тексты обновляются кодом при выборе карточки.
           -->
           <object class="customtkinter.CTkFrame" id="header_frame" name="header_frame">
@@ -383,19 +441,19 @@
               <property name="row">0</property>
               <property name="column">0</property>
               <property name="sticky">ew</property>
-              <property name="padx">12</property>
-              <property name="pady">8 4</property>
+              <property name="padx">18</property>
+              <property name="pady">14 6</property>
             </layout>
             <child>
               <object class="customtkinter.CTkLabel" id="example_title" name="example_title">
                 <property name="text">Выберите пример</property>
-                <property name="font">{Arial} 20 {bold}</property>
-                <property name="text_color">#e8ecfd</property>
+                <property name="font">{Arial} 21 {bold}</property>
+                <property name="text_color">#ffffff</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">0</property>
                   <property name="sticky">w</property>
-                  <property name="padx">4</property>
+                  <property name="padx">0</property>
                   <property name="pady">0 2</property>
                 </layout>
               </object>
@@ -404,12 +462,12 @@
               <object class="customtkinter.CTkLabel" id="example_desc" name="example_desc">
                 <property name="text">Кликните по карточке слева, чтобы выбрать пример</property>
                 <property name="font">{Arial} 11 {}</property>
-                <property name="text_color">#565f89</property>
+                <property name="text_color">#7d87a8</property>
                 <layout>
                   <property name="row">1</property>
                   <property name="column">0</property>
                   <property name="sticky">w</property>
-                  <property name="padx">4</property>
+                  <property name="padx">0</property>
                   <property name="pady">0</property>
                 </layout>
               </object>
@@ -423,53 +481,86 @@
         </child>
         <child>
           <!--
-              Панель опций: два CTkSwitch на одной строке.
-              CTkSwitch в плагине pygubu зарегистрирован (class CTkSwitchBO
-              в widgets.py, требует `lib="customtkinter"`). Состояние on/off
-              задаётся кодом через `switch.select()` / `switch.deselect()`.
+              Панель оформления: переключатель темы + выбор акцентного цвета.
+              Обработчики подключает код (theme_segmented / accent_menu).
           -->
-          <object class="customtkinter.CTkFrame" id="options_frame" name="options_frame">
+          <object class="customtkinter.CTkFrame" id="topbar_frame" name="topbar_frame">
             <property name="fg_color">transparent</property>
             <property name="corner_radius">0</property>
             <layout>
               <property name="row">1</property>
               <property name="column">0</property>
               <property name="sticky">ew</property>
-              <property name="padx">12</property>
+              <property name="padx">18</property>
               <property name="pady">0 8</property>
             </layout>
             <child>
-              <object class="customtkinter.CTkSwitch" id="clear_before_run_switch" name="clear_before_run_switch">
-                <property name="text">Очистка перед запуском</property>
-                <property name="text_color">#c0caf5</property>
-                <property name="progress_color">#7aa2f7</property>
-                <property name="fg_color">#3b4261</property>
-                <property name="button_color">#7aa2f7</property>
-                <property name="button_hover_color">#89b4fa</property>
+              <object class="customtkinter.CTkLabel" id="theme_label" name="theme_label">
+                <property name="text">Оформление</property>
                 <property name="font">{Arial} 11 {}</property>
+                <property name="text_color">#7d87a8</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">0</property>
                   <property name="sticky">w</property>
-                  <property name="padx">8</property>
+                  <property name="padx">0 8</property>
                   <property name="pady">0</property>
                 </layout>
               </object>
             </child>
             <child>
-              <object class="customtkinter.CTkSwitch" id="autoscroll_switch" name="autoscroll_switch">
-                <property name="text">Автопрокрутка вывода</property>
-                <property name="text_color">#c0caf5</property>
-                <property name="progress_color">#7aa2f7</property>
-                <property name="fg_color">#3b4261</property>
-                <property name="button_color">#7aa2f7</property>
-                <property name="button_hover_color">#89b4fa</property>
+              <object class="customtkinter.CTkSegmentedButton" id="theme_segmented" name="theme_segmented">
+                <property name="values">["Тёмная", "Светлая", "Система"]</property>
                 <property name="font">{Arial} 11 {}</property>
+                <property name="fg_color">#171c29</property>
+                <property name="selected_color">#6d8dff</property>
+                <property name="selected_hover_color">#8aa2ff</property>
+                <property name="unselected_color">#1d2434</property>
+                <property name="unselected_hover_color">#232c42</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="height">30</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">1</property>
                   <property name="sticky">w</property>
-                  <property name="padx">16</property>
+                  <property name="padx">0</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="accent_label" name="accent_label">
+                <property name="text">Акцент</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="text_color">#7d87a8</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">2</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">12 8</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkOptionMenu" id="accent_menu" name="accent_menu">
+                <property name="values">["Синий", "Циан", "Зелёный", "Розовый", "Янтарный"]</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="fg_color">#171c29</property>
+                <property name="button_color">#272f42</property>
+                <property name="button_hover_color">#34405c</property>
+                <property name="text_color">#d7defc</property>
+                <property name="dropdown_hover_color">#232c42</property>
+                <property name="dropdown_text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="height">30</property>
+                <property name="width">130</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">3</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">0</property>
                   <property name="pady">0</property>
                 </layout>
               </object>
@@ -477,14 +568,14 @@
             <layout_manager>
               <property name="grid">x</property>
               <property name="row_weights">{0: 0}</property>
-              <property name="column_weights">{0: 0, 1: 0}</property>
+              <property name="column_weights">{0: 0, 1: 0, 2: 1, 3: 0}</property>
             </layout_manager>
           </object>
         </child>
         <child>
           <!--
-              Ряд из трёх мини-карточек-метрик. Сетка 1×3, занимает всю ширину.
-              Цвета — палитра Tokyo Night (см. спеке).
+              Ряд из четырёх мини-карточек-метрик. Сетка 1x4, каждая
+              карточка занимает равную долю ширины (weights 1).
           -->
           <object class="customtkinter.CTkFrame" id="metrics_frame" name="metrics_frame">
             <property name="fg_color">transparent</property>
@@ -493,34 +584,34 @@
               <property name="row">2</property>
               <property name="column">0</property>
               <property name="sticky">ew</property>
-              <property name="padx">12</property>
-              <property name="pady">0 8</property>
+              <property name="padx">18</property>
+              <property name="pady">0 10</property>
             </layout>
             <child>
               <!-- Мини-карточка «Примеров в реестре». -->
               <object class="customtkinter.CTkFrame" id="metric_card_registry" name="metric_card_registry">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">0</property>
                   <property name="sticky">ew</property>
-                  <property name="padx">0 6</property>
+                  <property name="padx">0 5</property>
                   <property name="pady">0</property>
                 </layout>
                 <child>
                   <object class="customtkinter.CTkLabel" id="metric_registry_label" name="metric_registry_label">
-                    <property name="text">Примеров в реестре</property>
+                    <property name="text">В реестре</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#7d87a8</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
                       <property name="sticky">w</property>
                       <property name="padx">12</property>
-                      <property name="pady">8 2</property>
+                      <property name="pady">9 2</property>
                     </layout>
                   </object>
                 </child>
@@ -528,57 +619,101 @@
                   <object class="customtkinter.CTkLabel" id="metric_registry_value" name="metric_registry_value">
                     <property name="text">5</property>
                     <property name="font">{Arial} 16 {bold}</property>
-                    <property name="text_color">#7dcfff</property>
+                    <property name="text_color">#4cc9f0</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
                       <property name="sticky">w</property>
                       <property name="padx">12</property>
-                      <property name="pady">0 8</property>
+                      <property name="pady">0 9</property>
                     </layout>
                   </object>
                 </child>
               </object>
             </child>
             <child>
-              <!-- Мини-карточка «Последний запуск». -->
-              <object class="customtkinter.CTkFrame" id="metric_card_last_run" name="metric_card_last_run">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+              <!-- Мини-карточка «Запусков». -->
+              <object class="customtkinter.CTkFrame" id="metric_card_runs" name="metric_card_runs">
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">1</property>
                   <property name="sticky">ew</property>
-                  <property name="padx">3 3</property>
+                  <property name="padx">5 5</property>
                   <property name="pady">0</property>
                 </layout>
                 <child>
-                  <object class="customtkinter.CTkLabel" id="metric_last_run_label" name="metric_last_run_label">
-                    <property name="text">Последний запуск</property>
+                  <object class="customtkinter.CTkLabel" id="metric_runs_label" name="metric_runs_label">
+                    <property name="text">Запусков</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#7d87a8</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
                       <property name="sticky">w</property>
                       <property name="padx">12</property>
-                      <property name="pady">8 2</property>
+                      <property name="pady">9 2</property>
                     </layout>
                   </object>
                 </child>
                 <child>
-                  <object class="customtkinter.CTkLabel" id="metric_last_run_value" name="metric_last_run_value">
-                    <property name="text">—</property>
-                    <property name="font">{Arial} 13 {bold}</property>
-                    <property name="text_color">#9ece6a</property>
+                  <object class="customtkinter.CTkLabel" id="metric_runs_value" name="metric_runs_value">
+                    <property name="text">0</property>
+                    <property name="font">{Arial} 16 {bold}</property>
+                    <property name="text_color">#3ddc97</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
                       <property name="sticky">w</property>
                       <property name="padx">12</property>
-                      <property name="pady">0 8</property>
+                      <property name="pady">0 9</property>
+                    </layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <!-- Мини-карточка «Время» (часы, тикают кодом). -->
+              <object class="customtkinter.CTkFrame" id="metric_card_clock" name="metric_card_clock">
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="corner_radius">12</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">2</property>
+                  <property name="sticky">ew</property>
+                  <property name="padx">5 5</property>
+                  <property name="pady">0</property>
+                </layout>
+                <child>
+                  <object class="customtkinter.CTkLabel" id="metric_clock_label" name="metric_clock_label">
+                    <property name="text">Время</property>
+                    <property name="font">{Arial} 10 {}</property>
+                    <property name="text_color">#7d87a8</property>
+                    <layout>
+                      <property name="row">0</property>
+                      <property name="column">0</property>
+                      <property name="sticky">w</property>
+                      <property name="padx">12</property>
+                      <property name="pady">9 2</property>
+                    </layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="customtkinter.CTkLabel" id="metric_clock_value" name="metric_clock_value">
+                    <property name="text">--:--:--</property>
+                    <property name="font">{Arial} 16 {bold}</property>
+                    <property name="text_color">#ffd166</property>
+                    <layout>
+                      <property name="row">1</property>
+                      <property name="column">0</property>
+                      <property name="sticky">w</property>
+                      <property name="padx">12</property>
+                      <property name="pady">0 9</property>
                     </layout>
                   </object>
                 </child>
@@ -587,28 +722,28 @@
             <child>
               <!-- Мини-карточка «Статус». -->
               <object class="customtkinter.CTkFrame" id="metric_card_status" name="metric_card_status">
-                <property name="fg_color">#292e42</property>
-                <property name="border_color">#3b4261</property>
+                <property name="fg_color">#171c29</property>
+                <property name="border_color">#272f42</property>
                 <property name="border_width">1</property>
-                <property name="corner_radius">10</property>
+                <property name="corner_radius">12</property>
                 <layout>
                   <property name="row">0</property>
-                  <property name="column">2</property>
+                  <property name="column">3</property>
                   <property name="sticky">ew</property>
-                  <property name="padx">6 0</property>
+                  <property name="padx">5 0</property>
                   <property name="pady">0</property>
                 </layout>
                 <child>
                   <object class="customtkinter.CTkLabel" id="metric_status_label" name="metric_status_label">
                     <property name="text">Статус</property>
                     <property name="font">{Arial} 10 {}</property>
-                    <property name="text_color">#565f89</property>
+                    <property name="text_color">#7d87a8</property>
                     <layout>
                       <property name="row">0</property>
                       <property name="column">0</property>
                       <property name="sticky">w</property>
                       <property name="padx">12</property>
-                      <property name="pady">8 2</property>
+                      <property name="pady">9 2</property>
                     </layout>
                   </object>
                 </child>
@@ -616,13 +751,13 @@
                   <object class="customtkinter.CTkLabel" id="metric_status_value" name="metric_status_value">
                     <property name="text">Готово</property>
                     <property name="font">{Arial} 13 {bold}</property>
-                    <property name="text_color">#c0caf5</property>
+                    <property name="text_color">#d7defc</property>
                     <layout>
                       <property name="row">1</property>
                       <property name="column">0</property>
                       <property name="sticky">w</property>
                       <property name="padx">12</property>
-                      <property name="pady">0 8</property>
+                      <property name="pady">0 9</property>
                     </layout>
                   </object>
                 </child>
@@ -631,86 +766,298 @@
             <layout_manager>
               <property name="grid">x</property>
               <property name="row_weights">{0: 0}</property>
-              <property name="column_weights">{0: 1, 1: 1, 2: 1}</property>
+              <property name="column_weights">{0: 1, 1: 1, 2: 1, 3: 1}</property>
             </layout_manager>
           </object>
         </child>
         <child>
           <!--
-              Панель вывода («терминал»): тёмный фон #101017, моноширинный
-              шрифт, перенос по словам. Растягивается на всю оставшуюся
-              высоту контента (row 3, weight=1).
+              Секция «Симуляция задач»: 3 кнопки-запуска + 3 прогрессбара
+              с именами и процентами. Проценты и бары двигает код
+              (анимация через after, скорость — speed_slider).
           -->
-          <object class="customtkinter.CTkTextbox" id="output_text" name="output_text">
-            <property name="fg_color">#101017</property>
-            <property name="text_color">#c0caf5</property>
-            <property name="border_color">#3b4261</property>
+          <object class="customtkinter.CTkFrame" id="tasks_frame" name="tasks_frame">
+            <property name="fg_color">#171c29</property>
+            <property name="border_color">#272f42</property>
             <property name="border_width">1</property>
-            <property name="corner_radius">8</property>
-            <property name="font">{JetBrains Mono} 10 {}</property>
-            <property name="wrap">word</property>
-            <property name="state">normal</property>
+            <property name="corner_radius">12</property>
             <layout>
               <property name="row">3</property>
               <property name="column">0</property>
-              <property name="sticky">nsew</property>
-              <property name="padx">12</property>
-              <property name="pady">0 8</property>
+              <property name="sticky">ew</property>
+              <property name="padx">18</property>
+              <property name="pady">0 10</property>
             </layout>
+            <child>
+              <object class="customtkinter.CTkLabel" id="tasks_title" name="tasks_title">
+                <property name="text">Симуляция задач</property>
+                <property name="font">{Arial} 11 {bold}</property>
+                <property name="text_color">#b18cff</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">0</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">14</property>
+                  <property name="pady">10 4</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <!-- Ряд кнопок-задач: каждая запускает свой прогрессбар. -->
+              <object class="customtkinter.CTkButton" id="task_run_1" name="task_run_1">
+                <property name="text">Загрузка данных</property>
+                <property name="fg_color">#1d2434</property>
+                <property name="hover_color">#242d44</property>
+                <property name="border_color">#34405c</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">28</property>
+                <property name="width">130</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">1</property>
+                  <property name="column">0</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">14</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkButton" id="task_run_2" name="task_run_2">
+                <property name="text">Обработка</property>
+                <property name="fg_color">#1d2434</property>
+                <property name="hover_color">#242d44</property>
+                <property name="border_color">#34405c</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">28</property>
+                <property name="width">130</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">1</property>
+                  <property name="column">1</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">8</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkButton" id="task_run_3" name="task_run_3">
+                <property name="text">Экспорт</property>
+                <property name="fg_color">#1d2434</property>
+                <property name="hover_color">#242d44</property>
+                <property name="border_color">#34405c</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">28</property>
+                <property name="width">130</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">1</property>
+                  <property name="column">2</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">8</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="task_name_1" name="task_name_1">
+                <property name="text">Загрузка данных</property>
+                <property name="font">{Arial} 10 {}</property>
+                <property name="text_color">#7d87a8</property>
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">0</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">14</property>
+                  <property name="pady">10 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkProgressBar" id="task_bar_1" name="task_bar_1">
+                <property name="fg_color">#1d2434</property>
+                <property name="progress_color">#4cc9f0</property>
+                <property name="corner_radius">5</property>
+                <property name="height">10</property>
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">1</property>
+                  <property name="sticky">ew</property>
+                  <property name="padx">10 8</property>
+                  <property name="pady">12 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="task_pct_1" name="task_pct_1">
+                <property name="text">0%</property>
+                <property name="font">{Arial} 10 {bold}</property>
+                <property name="text_color">#4cc9f0</property>
+                <property name="width">42</property>
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">2</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">0 14</property>
+                  <property name="pady">10 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="task_name_2" name="task_name_2">
+                <property name="text">Обработка</property>
+                <property name="font">{Arial} 10 {}</property>
+                <property name="text_color">#7d87a8</property>
+                <layout>
+                  <property name="row">3</property>
+                  <property name="column">0</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">14</property>
+                  <property name="pady">8 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkProgressBar" id="task_bar_2" name="task_bar_2">
+                <property name="fg_color">#1d2434</property>
+                <property name="progress_color">#3ddc97</property>
+                <property name="corner_radius">5</property>
+                <property name="height">10</property>
+                <layout>
+                  <property name="row">3</property>
+                  <property name="column">1</property>
+                  <property name="sticky">ew</property>
+                  <property name="padx">10 8</property>
+                  <property name="pady">10 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="task_pct_2" name="task_pct_2">
+                <property name="text">0%</property>
+                <property name="font">{Arial} 10 {bold}</property>
+                <property name="text_color">#3ddc97</property>
+                <property name="width">42</property>
+                <layout>
+                  <property name="row">3</property>
+                  <property name="column">2</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">0 14</property>
+                  <property name="pady">8 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="task_name_3" name="task_name_3">
+                <property name="text">Экспорт</property>
+                <property name="font">{Arial} 10 {}</property>
+                <property name="text_color">#7d87a8</property>
+                <layout>
+                  <property name="row">4</property>
+                  <property name="column">0</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">14</property>
+                  <property name="pady">8 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkProgressBar" id="task_bar_3" name="task_bar_3">
+                <property name="fg_color">#1d2434</property>
+                <property name="progress_color">#ff6b9d</property>
+                <property name="corner_radius">5</property>
+                <property name="height">10</property>
+                <layout>
+                  <property name="row">4</property>
+                  <property name="column">1</property>
+                  <property name="sticky">ew</property>
+                  <property name="padx">10 8</property>
+                  <property name="pady">10 0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="task_pct_3" name="task_pct_3">
+                <property name="text">0%</property>
+                <property name="font">{Arial} 10 {bold}</property>
+                <property name="text_color">#ff6b9d</property>
+                <property name="width">42</property>
+                <layout>
+                  <property name="row">4</property>
+                  <property name="column">2</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">0 14</property>
+                  <property name="pady">8 0</property>
+                </layout>
+              </object>
+            </child>
+            <layout_manager>
+              <property name="grid">x</property>
+              <property name="row_weights">{0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}</property>
+              <property name="column_weights">{0: 0, 1: 1, 2: 0}</property>
+            </layout_manager>
           </object>
         </child>
         <child>
           <!--
-              Панель кнопок: три CTkButton на одной строке.
-              Сетка 1×3, weight=0 (фиксированные ширины).
+              Секция «Демо-виджеты»: 5 кнопок + слайдер скорости симуляций.
+              Все обработчики — код. hover=false: hover-анимацию делает код.
           -->
-          <object class="customtkinter.CTkFrame" id="buttons_frame" name="buttons_frame">
+          <object class="customtkinter.CTkFrame" id="demo_frame" name="demo_frame">
             <property name="fg_color">transparent</property>
             <property name="corner_radius">0</property>
             <layout>
               <property name="row">4</property>
               <property name="column">0</property>
               <property name="sticky">ew</property>
-              <property name="padx">12</property>
+              <property name="padx">18</property>
               <property name="pady">0 8</property>
             </layout>
             <child>
-              <!--
-                  Кнопка «Запустить»: акцентный синий #7aa2f7, hover #89b4fa,
-                  фиксированный размер 140×36, шрифт Arial 12 bold.
-              -->
-              <object class="customtkinter.CTkButton" id="run_button" name="run_button">
-                <property name="text">Запустить</property>
-                <property name="fg_color">#7aa2f7</property>
-                <property name="hover_color">#89b4fa</property>
-                <property name="text_color">#1a1b26</property>
-                <property name="corner_radius">10</property>
-                <property name="font">{Arial} 12 {bold}</property>
-                <property name="width">140</property>
-                <property name="height">36</property>
+              <object class="customtkinter.CTkButton" id="demo_toast" name="demo_toast">
+                <property name="text">Тост</property>
+                <property name="fg_color">#171c29</property>
+                <property name="hover_color">#232c42</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">30</property>
+                <property name="width">92</property>
+                <property name="hover">false</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">0</property>
                   <property name="sticky">w</property>
-                  <property name="padx">4</property>
+                  <property name="padx">0</property>
                   <property name="pady">0</property>
                 </layout>
               </object>
             </child>
             <child>
-              <!--
-                  Кнопка «Очистить»: нейтральный серый #292e42, hover #363e59,
-                  фиксированный размер 100×32.
-              -->
-              <object class="customtkinter.CTkButton" id="clear_button" name="clear_button">
-                <property name="text">Очистить</property>
-                <property name="fg_color">#292e42</property>
-                <property name="hover_color">#363e59</property>
-                <property name="text_color">#c0caf5</property>
-                <property name="corner_radius">10</property>
-                <property name="font">{Arial} 12 {}</property>
-                <property name="width">100</property>
-                <property name="height">32</property>
+              <object class="customtkinter.CTkButton" id="demo_wave" name="demo_wave">
+                <property name="text">Волна</property>
+                <property name="fg_color">#171c29</property>
+                <property name="hover_color">#232c42</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">30</property>
+                <property name="width">92</property>
+                <property name="hover">false</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">1</property>
@@ -721,19 +1068,18 @@
               </object>
             </child>
             <child>
-              <!--
-                  Кнопка «Копировать»: тот же нейтральный стиль, 120×32.
-                  Копирует содержимое output_text в буфер обмена.
-              -->
-              <object class="customtkinter.CTkButton" id="copy_button" name="copy_button">
-                <property name="text">Копировать</property>
-                <property name="fg_color">#292e42</property>
-                <property name="hover_color">#363e59</property>
-                <property name="text_color">#c0caf5</property>
-                <property name="corner_radius">10</property>
-                <property name="font">{Arial} 12 {}</property>
-                <property name="width">120</property>
-                <property name="height">32</property>
+              <object class="customtkinter.CTkButton" id="demo_flash" name="demo_flash">
+                <property name="text">Вспышка</property>
+                <property name="fg_color">#171c29</property>
+                <property name="hover_color">#232c42</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">30</property>
+                <property name="width">92</property>
+                <property name="hover">false</property>
                 <layout>
                   <property name="row">0</property>
                   <property name="column">2</property>
@@ -743,57 +1089,309 @@
                 </layout>
               </object>
             </child>
+            <child>
+              <object class="customtkinter.CTkButton" id="demo_reset" name="demo_reset">
+                <property name="text">Сброс</property>
+                <property name="fg_color">#171c29</property>
+                <property name="hover_color">#232c42</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">30</property>
+                <property name="width">92</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">3</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">8</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkButton" id="demo_test" name="demo_test">
+                <property name="text">Тест</property>
+                <property name="fg_color">#171c29</property>
+                <property name="hover_color">#232c42</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">9</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="height">30</property>
+                <property name="width">92</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">4</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">8</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="speed_label" name="speed_label">
+                <property name="text">Скорость</property>
+                <property name="font">{Arial} 11 {}</property>
+                <property name="text_color">#7d87a8</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">5</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">16 16</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkSlider" id="speed_slider" name="speed_slider">
+                <property name="from_">1</property>
+                <property name="to">10</property>
+                <property name="number_of_steps">9</property>
+                <property name="fg_color">#1d2434</property>
+                <property name="progress_color">#6d8dff</property>
+                <property name="button_color">#6d8dff</property>
+                <property name="button_hover_color">#8aa2ff</property>
+                <property name="corner_radius">6</property>
+                <property name="height">20</property>
+                <property name="width">160</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">6</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">8</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkLabel" id="speed_value" name="speed_value">
+                <property name="text">5x</property>
+                <property name="font">{Arial} 11 {bold}</property>
+                <property name="text_color">#6d8dff</property>
+                <property name="width">30</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">7</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">0</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
             <layout_manager>
               <property name="grid">x</property>
               <property name="row_weights">{0: 0}</property>
-              <property name="column_weights">{0: 0, 1: 0, 2: 0}</property>
+              <property name="column_weights">{0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 1, 7: 0}</property>
             </layout_manager>
           </object>
         </child>
         <child>
           <!--
-              Прогрессбар. fg_color — бордюр/фон дорожки, progress_color —
-              акцент. Анимация «выполняется» через .start() / .stop() в коде.
+              Панель вывода («терминал»): фон #070a10, моноширинный шрифт,
+              перенос по слову. Растягивается на всю оставшуюся высоту.
           -->
-          <object class="customtkinter.CTkProgressBar" id="progressbar" name="progressbar">
-            <property name="fg_color">#292e42</property>
-            <property name="progress_color">#7aa2f7</property>
-            <property name="corner_radius">6</property>
-            <property name="height">8</property>
+          <object class="customtkinter.CTkTextbox" id="output_text" name="output_text">
+            <property name="fg_color">#070a10</property>
+            <property name="text_color">#c8d3f5</property>
+            <property name="border_color">#272f42</property>
+            <property name="border_width">1</property>
+            <property name="corner_radius">12</property>
+            <property name="font">{JetBrains Mono} 10 {}</property>
+            <property name="wrap">word</property>
+            <property name="state">normal</property>
             <layout>
               <property name="row">5</property>
               <property name="column">0</property>
-              <property name="sticky">ew</property>
-              <property name="padx">12</property>
-              <property name="pady">0 4</property>
+              <property name="sticky">nsew</property>
+              <property name="padx">18</property>
+              <property name="pady">0 8</property>
             </layout>
           </object>
         </child>
         <child>
-          <!-- Статусная строка: вторичный цвет #565f89, мелкий шрифт. -->
-          <object class="customtkinter.CTkLabel" id="status_label" name="status_label">
-            <property name="text">Готово</property>
-            <property name="text_color">#565f89</property>
-            <property name="font">{Arial} 10 {}</property>
+          <!--
+              Основной прогрессбар примеров: fg_color — дорожка,
+              progress_color — акцент. Анимация через .start()/.stop().
+          -->
+          <object class="customtkinter.CTkProgressBar" id="progressbar" name="progressbar">
+            <property name="fg_color">#1d2434</property>
+            <property name="progress_color">#6d8dff</property>
+            <property name="corner_radius">5</property>
+            <property name="height">8</property>
             <layout>
               <property name="row">6</property>
               <property name="column">0</property>
+              <property name="sticky">ew</property>
+              <property name="padx">18</property>
+              <property name="pady">0 6</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <!--
+              Панель кнопок: Запустить (акцент) + Очистить + Копировать,
+              справа — свитчи опций терминала («Очистка перед запуском»,
+              «Автопрокрутка вывода»). hover=false у кнопок: hover-анимацию
+              делает код (парение). Пустой столбец 3 с weight 1 отодвигает
+              свитчи к правому краю. Состояние on задаёт код через
+              `switch.select()`; перекраску при смене темы/акцента тоже
+              делает код (`_apply_theme_surfaces` / `_apply_accent`).
+          -->
+          <object class="customtkinter.CTkFrame" id="buttons_frame" name="buttons_frame">
+            <property name="fg_color">transparent</property>
+            <property name="corner_radius">0</property>
+            <layout>
+              <property name="row">7</property>
+              <property name="column">0</property>
+              <property name="sticky">ew</property>
+              <property name="padx">18</property>
+              <property name="pady">0 6</property>
+            </layout>
+            <child>
+              <object class="customtkinter.CTkButton" id="run_button" name="run_button">
+                <property name="text">▶  Запустить</property>
+                <property name="fg_color">#6d8dff</property>
+                <property name="hover_color">#8aa2ff</property>
+                <property name="text_color">#0b0e14</property>
+                <property name="corner_radius">10</property>
+                <property name="font">{Arial} 12 {bold}</property>
+                <property name="height">38</property>
+                <property name="width">150</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">0</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">0</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkButton" id="clear_button" name="clear_button">
+                <property name="text">Очистить</property>
+                <property name="fg_color">#171c29</property>
+                <property name="hover_color">#232c42</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">10</property>
+                <property name="font">{Arial} 12 {}</property>
+                <property name="height">38</property>
+                <property name="width">110</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">1</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">10</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="customtkinter.CTkButton" id="copy_button" name="copy_button">
+                <property name="text">Копировать</property>
+                <property name="fg_color">#171c29</property>
+                <property name="hover_color">#232c42</property>
+                <property name="border_color">#272f42</property>
+                <property name="border_width">1</property>
+                <property name="text_color">#d7defc</property>
+                <property name="corner_radius">10</property>
+                <property name="font">{Arial} 12 {}</property>
+                <property name="height">38</property>
+                <property name="width">120</property>
+                <property name="hover">false</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">2</property>
+                  <property name="sticky">w</property>
+                  <property name="padx">0</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <!--
+                  Свитч «Очистка перед запуском»: код читает его в
+                  `_clear_before_run_enabled()` перед стартом примера.
+              -->
+              <object class="customtkinter.CTkSwitch" id="clear_before_run_switch" name="clear_before_run_switch">
+                <property name="text">Очистка перед запуском</property>
+                <property name="text_color">#d7defc</property>
+                <property name="fg_color">#1d2434</property>
+                <property name="progress_color">#6d8dff</property>
+                <property name="button_color">#6d8dff</property>
+                <property name="button_hover_color">#8aa2ff</property>
+                <property name="font">{Arial} 11 {}</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">3</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">0 14</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <!--
+                  Свитч «Автопрокрутка вывода»: код читает его в
+                  `_append_output()` для прокрутки терминала вниз.
+              -->
+              <object class="customtkinter.CTkSwitch" id="autoscroll_switch" name="autoscroll_switch">
+                <property name="text">Автопрокрутка вывода</property>
+                <property name="text_color">#d7defc</property>
+                <property name="fg_color">#1d2434</property>
+                <property name="progress_color">#6d8dff</property>
+                <property name="button_color">#6d8dff</property>
+                <property name="button_hover_color">#8aa2ff</property>
+                <property name="font">{Arial} 11 {}</property>
+                <layout>
+                  <property name="row">0</property>
+                  <property name="column">4</property>
+                  <property name="sticky">e</property>
+                  <property name="padx">0</property>
+                  <property name="pady">0</property>
+                </layout>
+              </object>
+            </child>
+            <layout_manager>
+              <property name="grid">x</property>
+              <property name="row_weights">{0: 0}</property>
+              <property name="column_weights">{0: 0, 1: 0, 2: 0, 3: 1, 4: 0}</property>
+            </layout_manager>
+          </object>
+        </child>
+        <child>
+          <!-- Статусная строка: приглушённый цвет, мелкий шрифт. -->
+          <object class="customtkinter.CTkLabel" id="status_label" name="status_label">
+            <property name="text">Готово</property>
+            <property name="text_color">#565f7d</property>
+            <property name="font">{Arial} 10 {}</property>
+            <layout>
+              <property name="row">8</property>
+              <property name="column">0</property>
               <property name="sticky">w</property>
-              <property name="padx">16</property>
-              <property name="pady">0 8</property>
+              <property name="padx">20</property>
+              <property name="pady">0 10</property>
             </layout>
           </object>
         </child>
         <layout_manager>
           <property name="grid">y</property>
-          <property name="row_weights">{0: 0, 1: 0, 2: 0, 3: 1, 4: 0, 5: 0, 6: 0}</property>
+          <property name="row_weights">{0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0}</property>
           <property name="column_weights">{0: 0}</property>
         </layout_manager>
       </object>
     </child>
     <layout_manager>
       <property name="grid">x</property>
-      <property name="geometry">900x600</property>
+      <property name="geometry">980x640</property>
       <property name="row_weights">{0: 1}</property>
       <property name="column_weights">{0: 0, 1: 1}</property>
     </layout_manager>

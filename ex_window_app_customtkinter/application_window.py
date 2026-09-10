@@ -3,15 +3,43 @@
 Назначение:
 - загрузить разметку из `window_app.ui` через `pygubu.Builder`;
 - встроить её в `customtkinter.CTk` с тёмной темой «blue»;
-- связать виджеты по stable id (фаза 3, расширенные в фазе 7) с
-  обработчиками;
+- связать виджеты по stable id с обработчиками;
 - запускать курируемые примеры из `example_runner.run_example` в
   фоновом потоке, доставляя вывод в `output_text` через `queue.Queue`
   и `window.after(...)` (обязательно из главного потока Tk).
 
-Импорт модуля безопасен для headless-сред:
-никакие GUI-объекты (`Tk`, `CTk`, загрузка `.ui`) не создаются
-на уровне модуля — только при вызове `ApplicationWindow(...)`.
+Редизайн v3 «Aurora Night» — что добавилось сверх запуска примеров:
+
+- **Парение (hover-анимации).** Все кнопки и карточки реагируют на
+  курсор плавным переходом цвета (интерполяция hex через `after`),
+  а не мгновенной сменой `hover_color`. Встроенный hover у кнопок
+  отключён (`hover=false` в .ui) — анимирует код.
+- **FAB (floating action button).** Круглая кнопка «▶» в правом
+  нижнем углу окна (place поверх grid): быстрый запуск выбранного
+  примера, постоянная пульсация и «подъём» при наведении.
+- **Симуляция задач.** Три фейковые задачи («Загрузка данных»,
+  «Обработка», «Экспорт») с собственными прогрессбарами и процентами;
+  скорость регулируется слайдером. Работают параллельно, «Тест»
+  запускает их цепочкой. Всё через `after` — без потоков.
+- **Демо-кнопки.** «Тост» (временный статус), «Волна» (поочерёдная
+  подсветка кнопок), «Вспышка» (подсветка карточек метрик),
+  «Сброс» (полный сброс состояния), «Тест» (цепочка задач).
+- **Метрики.** 4 мини-карточки: примеров в реестре, счётчик запусков,
+  живые часы (тик раз в секунду), статус.
+- **Оформление.** Переключатель темы (Тёмная/Светлая/Система) с
+  перекраской поверхностей и выбор акцентного цвета (5 палитр),
+  перекрашивающий кнопки/прогрессбары/слайдер/FAB на лету.
+- **Цветной терминал.** Заголовки прогонов и ошибки подсвечиваются
+  тегами tk.Text.
+
+Анимации реализованы пошагово через `window.after` (без потоков и
+без внешних зависимостей): `_animate` интерполирует цвет свойства
+виджета за ~160 мс; конкурирующие анимации одного свойства отменяют
+друг друга (ключ = пара «виджет, свойство»).
+
+Импорт модуля безопасен для headless-сред: никакие GUI-объекты
+(`Tk`, `CTk`, загрузка `.ui`) не создаются на уровне модуля — только
+при вызове `ApplicationWindow(...)`.
 """
 
 from __future__ import annotations
@@ -20,11 +48,12 @@ import customtkinter as ctk
 import datetime as _dt
 import pygubu
 import queue
+import re
 import threading
 import tkinter as tk
 import traceback
 from pathlib import Path
-from typing import Final
+from typing import Callable, Final
 
 from ex_window_app_customtkinter.example_runner import (
     ExampleDescriptor,
@@ -36,38 +65,104 @@ from ex_window_app_customtkinter.example_runner import (
 # ------------------------------------------------------------------------
 # Константы
 # ------------------------------------------------------------------------
-# Тема CustomTkinter — статично тёмная, см. REQUIREMENTS.md раздел
-# «Подтверждённые решения». Переключатель тем ttkbootstrap ушёл.
+# Тема CustomTkinter — стартово тёмная; дальше переключается сегментом
+# «Оформление» в UI (Тёмная/Светлая/Система).
 _APPEARANCE_MODE: Final[str] = "Dark"
 _COLOR_THEME: Final[str] = "blue"
 
-# Заголовок и геометрия окна (редизайн v2: 900x600, minsize 800x520).
+# Заголовок и геометрия окна (редизайн v3: 980x640, minsize 900x560).
 _WINDOW_TITLE: Final[str] = "CustomTkinter — запуск примеров"
-_WINDOW_GEOMETRY: Final[str] = "900x600"
-_WINDOW_MINSIZE: Final[tuple[int, int]] = (800, 520)
+_WINDOW_GEOMETRY: Final[str] = "980x640"
+_WINDOW_MINSIZE: Final[tuple[int, int]] = (900, 560)
 
-# Палитра Tokyo Night — единая точка правды, чтобы grep по ключевым
-# цветам в `application_window.py`/`window_app.ui` оставался зелёным.
-# Все цвета соответствуют разделу «Цветовая палитра» дизайн-спеки.
-_COLOR_ACCENT: Final[str] = "#7aa2f7"
-_COLOR_ACCENT_HOVER: Final[str] = "#89b4fa"
-_COLOR_CARD_FG: Final[str] = "#292e42"
-_COLOR_CARD_BORDER: Final[str] = "#3b4261"
-_COLOR_CARD_HOVER: Final[str] = "#363e59"
-_COLOR_CARD_SELECTED_FG: Final[str] = "#2f334d"
-_COLOR_CARD_SELECTED_BORDER: Final[str] = "#7aa2f7"
-_COLOR_TEXT_PRIMARY: Final[str] = "#c0caf5"
-_COLOR_TEXT_BRIGHT: Final[str] = "#e8ecfd"
-_COLOR_TEXT_SECONDARY: Final[str] = "#565f89"
-_COLOR_METRIC_REGISTRY: Final[str] = "#7dcfff"
-_COLOR_METRIC_LAST_RUN: Final[str] = "#9ece6a"
-_COLOR_METRIC_STATUS: Final[str] = "#c0caf5"
-_COLOR_METRIC_ERROR: Final[str] = "#f7768e"
-_COLOR_STATUS_DEFAULT: Final[str] = "#565f89"
+# ----------------------------------------------------------------
+# Палитры «Aurora Night». Единая точка правды: .ui содержит те же
+# тёмные значения, а код использует словарь для перекраски при
+# смене темы и для hover-анимаций (цвета берутся из активной
+# палитры в момент события).
+# ----------------------------------------------------------------
+_PALETTE_DARK: Final[dict[str, str]] = {
+    "bg_app": "#0b0e14",
+    "panel": "#11151f",
+    "card": "#171c29",
+    "card_hover": "#232c42",
+    "card_selected": "#1c2438",
+    "card_selected_border": "#6d8dff",
+    "input": "#141926",
+    "border": "#272f42",
+    "border_hover": "#42507a",
+    "track": "#1d2434",
+    "term_bg": "#070a10",
+    "term_fg": "#c8d3f5",
+    "text": "#d7defc",
+    "text_bright": "#ffffff",
+    "text_dim": "#7d87a8",
+    "text_dim2": "#565f7d",
+    "text_ghost": "#3f4763",
+    "on_accent": "#0b0e14",
+}
+
+# Светлая тема: перекрашиваются только крупные поверхности и тексты;
+# акцентные цвета (кнопка запуска, прогрессбары) остаются яркими.
+_PALETTE_LIGHT: Final[dict[str, str]] = {
+    "bg_app": "#e8ecf6",
+    "panel": "#ffffff",
+    "card": "#f2f5fc",
+    "card_hover": "#e4eaf8",
+    "card_selected": "#e7edff",
+    "card_selected_border": "#6d8dff",
+    "input": "#eef1f8",
+    "border": "#d5dcee",
+    "border_hover": "#a9b8e0",
+    "track": "#e4e9f4",
+    "term_bg": "#f7f9ff",
+    "term_fg": "#2a3350",
+    "text": "#2a3350",
+    "text_bright": "#101528",
+    "text_dim": "#6b7492",
+    "text_dim2": "#8a93b2",
+    "text_ghost": "#b4bdd6",
+    "on_accent": "#0b0e14",
+}
+
+# Акцентные палитры: имя → (базовый, hover). Выбираются OptionMenu
+# «Акцент»; применяются к run/FAB/прогрессбарам/слайдеру/свитчам.
+_ACCENTS: Final[dict[str, tuple[str, str]]] = {
+    "Синий": ("#6d8dff", "#8aa2ff"),
+    "Циан": ("#4cc9f0", "#7ad9f7"),
+    "Зелёный": ("#3ddc97", "#6fe7b5"),
+    "Розовый": ("#ff6b9d", "#ff8fb4"),
+    "Янтарный": ("#ffd166", "#ffe08f"),
+}
+_DEFAULT_ACCENT: Final[str] = "Синий"
+
+# Тексты задач — синхронны с .ui (task_run_N / task_name_N).
+_TASK_TITLES: Final[tuple[str, ...]] = (
+    "Загрузка данных",
+    "Обработка",
+    "Экспорт",
+)
+
+# Соответствие «имя в сегменте» → режим CustomTkinter.
+_THEME_MODES: Final[dict[str, str]] = {
+    "Тёмная": "Dark",
+    "Светлая": "Light",
+    "Система": "System",
+}
 
 # Интервал опроса очереди из главного потока (мс). 100 мс — баланс
 # между отзывчивостью UI и нагрузкой на event loop.
 _QUEUE_POLL_MS: Final[int] = 100
+
+# Часы: период обновления метрики «Время».
+_CLOCK_TICK_MS: Final[int] = 1000
+
+# Анимации: шаг и длительность по умолчанию (мс). 16 мс ≈ 60 fps.
+_ANIM_STEP_MS: Final[int] = 16
+_ANIM_DURATION_MS: Final[int] = 160
+
+# Пульс FAB: период полного цикла «дыхания».
+_FAB_PULSE_MS: Final[int] = 2400
 
 # Тексты статусов — единая точка правды, чтобы qa/adversary могли
 # проверять состояние окна по строке.
@@ -78,22 +173,30 @@ _STATUS_ERROR: Final[str] = "Ошибка"
 _STATUS_NO_SELECTION: Final[str] = "Сначала выберите пример"
 _STATUS_COPIED: Final[str] = "Вывод скопирован"
 _STATUS_COPIED_EMPTY: Final[str] = "Нечего копировать"
+_STATUS_RESET: Final[str] = "Состояние сброшено"
 
-# Тексты кнопок и метрик по умолчанию.
-_BUTTON_RUN_TEXT: Final[str] = "Запустить"
+# Тексты кнопок по умолчанию.
+_BUTTON_RUN_TEXT: Final[str] = "▶  Запустить"
 _BUTTON_RUN_RUNNING: Final[str] = "Выполняется..."
 _BUTTON_CLEAR_TEXT: Final[str] = "Очистить"
 _BUTTON_COPY_TEXT: Final[str] = "Копировать"
 
 _METRIC_REGISTRY_INITIAL: Final[str] = "5"
-_METRIC_LAST_RUN_INITIAL: Final[str] = "—"
 _METRIC_STATUS_INITIAL: Final[str] = "Готово"
 _SEARCH_COUNTER_ALL: Final[str] = "Найдено: 5 из 5"
+
+# Шаблоны вывода терминала (теги: hdr — заголовки, err — ошибки).
+_TAG_HDR: Final[str] = "hdr"
+_TAG_ERR: Final[str] = "err"
 
 # Имя .ui-файла лежит рядом с этим модулем. Путь разрешается через
 # `Path(__file__).with_name(...)`, чтобы не зависеть от cwd — см.
 # «cwd-зависимость» в AGENTS.md.
 _UI_FILENAME: Final[str] = "window_app.ui"
+
+# Регулярка валидного hex-цвета: анимировать можно только строки
+# вида #rrggbb (cget иногда возвращает "transparent" или объекты).
+_HEX_RE: Final[re.Pattern[str]] = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 # Краткие описания для шапки (`example_desc`) — отдельная от подписи
 # карточки формулировка, чтобы в шапке был связный текст «что делает
@@ -123,6 +226,34 @@ _EXAMPLE_DESCRIPTIONS: Final[dict[str, str]] = {
 
 
 # ------------------------------------------------------------------------
+# Утилиты цвета
+# ------------------------------------------------------------------------
+def _hex_to_rgb(color: str) -> tuple[int, int, int]:
+    """`#rrggbb` → кортеж (r, g, b). Вход обязан быть валидным hex."""
+    value = color.lstrip("#")
+    return int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16)
+
+
+def _rgb_to_hex(rgb: tuple[int, int, int]) -> str:
+    """(r, g, b) → строка `#rrggbb` (каналы зажаты в 0..255)."""
+    r, g, b = (max(0, min(255, c)) for c in rgb)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _lerp_color(start: str, end: str, t: float) -> str:
+    """Линейная интерполяция двух hex-цветов, t в [0, 1]."""
+    s = _hex_to_rgb(start)
+    e = _hex_to_rgb(end)
+    mixed = tuple(round(s[i] + (e[i] - s[i]) * t) for i in range(3))
+    return _rgb_to_hex(mixed)  # type: ignore[arg-type]
+
+
+def _lighten(color: str, amount: float) -> str:
+    """Осветлить hex-цвет к белому на долю amount (0..1)."""
+    return _lerp_color(color, "#ffffff", amount)
+
+
+# ------------------------------------------------------------------------
 # ApplicationWindow
 # ------------------------------------------------------------------------
 class ApplicationWindow:
@@ -130,23 +261,17 @@ class ApplicationWindow:
 
     Жизненный цикл:
     1. `__init__` поднимает `ctk.CTk`, загружает `.ui`, привязывает
-       виджеты и подключает обработчики; настраивает grid-веса
-       (фаза 7, редизайн v2) — сайдбар фикс. ширина, контент
-       растягивается, `output_text` и `cards_scroll` забирают всё
-       свободное место.
+       виджеты, настраивает grid-веса, создаёт FAB и запускает
+       фоновые «тикающие» сценарии (часы, пульс FAB, intro-анимация
+       карточек).
     2. Вызывающий код (`main_window_app.py`) стартует
        `self.window.mainloop()`.
-    3. Внутри `mainloop` пользователь выбирает пример кликом по
-       карточке, жмёт «Запустить» — `_start_example` запускает
-       `threading.Thread`, который зовёт `run_example(example_id)`.
-       Готовая строка (или traceback) попадает в `self._queue`.
-    4. Главный поток через
-       `self.window.after(_QUEUE_POLL_MS, self._poll_queue)`
-       забирает сообщения из очереди и обновляет виджеты.
+    3. Примеры запускаются в daemon-потоке; их вывод приходит в
+       главный поток через `queue.Queue` и `_poll_queue` (after).
+    4. Симуляции задач и все анимации живут в `after`-цепочках
+       главного потока — никаких потоков для UI-обновлений.
 
-    Все мутации виджетов происходят только из главного потока —
-    внутри `_poll_queue`, который вызывается из `after()`. Воркер
-    только кладёт данные в очередь.
+    Все мутации виджетов происходят только из главного потока.
 
     Импорт модуля не создаёт ни одного GUI-объекта: ни `Tk`, ни
     `ctk.CTk`, ни `Builder` — поэтому
@@ -174,7 +299,7 @@ class ApplicationWindow:
         # Pygubu-билдер. Плагин `pygubu.plugins.customtkinter`
         # подключается автоматически при импорте `pygubu`, поэтому
         # классы `customtkinter.*` в .ui резолвятся без явной
-        # регистрации (проверено в `__init__.py` пакета `pygubu`).
+        # регистрации.
         self.builder = pygubu.Builder()
         self.builder.add_from_file(str(ui_path))
 
@@ -183,27 +308,16 @@ class ApplicationWindow:
         self.main_frame = self.builder.get_object("main_frame", self.window)
         self.main_frame.pack(fill="both", expand=True)
 
-        # ---- Grid-веса (контракт фазы 7) ----
+        # ---- Grid-веса (контракт редизайна v3) ----
         # Задаются кодом, потому что надёжнее layout'а из .ui:
-        # pygubu иногда округляет веса до int, а здесь нам нужно
-        # именно 0/1 (только две колонки, одна — растягиваемая).
-        # main_frame: столбец 0 — сайдбар (weight 0, minsize рассчитан
-        # так, чтобы при `padx=12` в `sidebar.grid_configure(...)`
-        # ниже ячейка grid отдала sidebar'у ровно 280 px видимой
-        # ширины: 280 (целевая ширина виджета) + 12 + 12 (padx
-        # симметрично) = 304. Без явного minsize grid сжимает колонку
-        # по содержимому (~233 px), см. DEF-002. Столбец 1 — контент
-        # (weight 1, растягивается). Строка 0 растягивается.
-        self.main_frame.columnconfigure(0, weight=0, minsize=304)
+        # pygubu иногда округляет веса. main_frame: столбец 0 —
+        # сайдбар (weight 0, minsize 324 = 300 px видимой ширины +
+        # padx 12+12), столбец 1 — контент (weight 1).
+        self.main_frame.columnconfigure(0, weight=0, minsize=324)
         self.main_frame.columnconfigure(1, weight=1)
         self.main_frame.rowconfigure(0, weight=1)
-        # `sticky` в .ui для sidebar/content внутри main_frame не
-        # задан (Pygubu при отсутствии layout-блока оставляет его
-        # пустым), поэтому grid-виджеты не растягиваются на всю
-        # высоту/ширину ячейки. Принудительно включаем «nsew» и
-        # фиксируем позицию: sidebar — column=0, content — column=1,
-        # оба в row=0. Без явной расстановки pygubu кладёт оба в
-        # (row=0,column=0) и (row=1,column=0) — это типичная грабля.
+        # `sticky` в .ui для sidebar/content не задан — расставляем
+        # явно, иначе grid-виджеты не растянутся на всю ячейку.
         self.sidebar_frame = self.builder.get_object(
             "sidebar_frame", self.window
         )
@@ -214,10 +328,10 @@ class ApplicationWindow:
             row=0, column=0, sticky="nsew", padx=12, pady=12
         )
         self.content_frame.grid_configure(
-            row=0, column=1, sticky="nsew", padx=12, pady=12
+            row=0, column=1, sticky="nsew", padx=(0, 12), pady=12
         )
 
-        # ---- Привязка виджетов по stable id (контракт фазы 3+7) ----
+        # ---- Привязка виджетов по stable id ----
         # Все id зафиксированы в `window_app.ui`. Если какой-то id
         # переименуют в .ui, `builder.get_object` поднимет KeyError —
         # это правильный fail-fast на стадии разработки.
@@ -233,7 +347,7 @@ class ApplicationWindow:
         self.copy_button: ctk.CTkButton = self.builder.get_object(
             "copy_button", self.window
         )
-        self.progressbar: ctk.CTkProgressbar = self.builder.get_object(
+        self.progressbar: ctk.CTkProgressBar = self.builder.get_object(
             "progressbar", self.window
         )
         self.status_label: ctk.CTkLabel = self.builder.get_object(
@@ -263,30 +377,93 @@ class ApplicationWindow:
         self.metric_registry_value: ctk.CTkLabel = self.builder.get_object(
             "metric_registry_value", self.window
         )
-        self.metric_last_run_value: ctk.CTkLabel = self.builder.get_object(
-            "metric_last_run_value", self.window
+        self.metric_runs_value: ctk.CTkLabel = self.builder.get_object(
+            "metric_runs_value", self.window
+        )
+        self.metric_clock_value: ctk.CTkLabel = self.builder.get_object(
+            "metric_clock_value", self.window
         )
         self.metric_status_value: ctk.CTkLabel = self.builder.get_object(
             "metric_status_value", self.window
         )
+        self.metric_card_registry: ctk.CTkFrame = self.builder.get_object(
+            "metric_card_registry", self.window
+        )
+        self.metric_card_runs: ctk.CTkFrame = self.builder.get_object(
+            "metric_card_runs", self.window
+        )
+        self.metric_card_clock: ctk.CTkFrame = self.builder.get_object(
+            "metric_card_clock", self.window
+        )
+        self.metric_card_status: ctk.CTkFrame = self.builder.get_object(
+            "metric_card_status", self.window
+        )
+        self.theme_segmented: ctk.CTkSegmentedButton = (
+            self.builder.get_object("theme_segmented", self.window)
+        )
+        self.accent_menu: ctk.CTkOptionMenu = self.builder.get_object(
+            "accent_menu", self.window
+        )
+        self.sidebar_title: ctk.CTkLabel = self.builder.get_object(
+            "sidebar_title", self.window
+        )
+        self.sidebar_badge: ctk.CTkLabel = self.builder.get_object(
+            "sidebar_badge", self.window
+        )
+        self.sidebar_footer: ctk.CTkLabel = self.builder.get_object(
+            "sidebar_footer", self.window
+        )
+        self.tasks_frame: ctk.CTkFrame = self.builder.get_object(
+            "tasks_frame", self.window
+        )
+        self.demo_frame: ctk.CTkFrame = self.builder.get_object(
+            "demo_frame", self.window
+        )
+        self.speed_slider: ctk.CTkSlider = self.builder.get_object(
+            "speed_slider", self.window
+        )
+        self.speed_value: ctk.CTkLabel = self.builder.get_object(
+            "speed_value", self.window
+        )
+        self.task_buttons: tuple[ctk.CTkButton, ...] = tuple(
+            self.builder.get_object(f"task_run_{i}", self.window)
+            for i in (1, 2, 3)
+        )
+        self.task_bars: tuple[ctk.CTkProgressBar, ...] = tuple(
+            self.builder.get_object(f"task_bar_{i}", self.window)
+            for i in (1, 2, 3)
+        )
+        self.task_pcts: tuple[ctk.CTkLabel, ...] = tuple(
+            self.builder.get_object(f"task_pct_{i}", self.window)
+            for i in (1, 2, 3)
+        )
+        self.demo_buttons: dict[str, ctk.CTkButton] = {
+            key: self.builder.get_object(f"demo_{key}", self.window)
+            for key in ("toast", "wave", "flash", "reset", "test")
+        }
 
         # ---- Настройка grid-весов в сайдбаре и контенте ----
-        # Сайдбар: 4 строки; растягивается только строка 3 (cards_scroll).
-        for r in (0, 1, 2):
+        # Сайдбар: 5 строк; растягивается только строка 3 (cards_scroll).
+        for r in (0, 1, 2, 4):
             self.sidebar_frame.rowconfigure(r, weight=0)
         self.sidebar_frame.rowconfigure(3, weight=1)
-        self.sidebar_frame.columnconfigure(0, weight=0)
+        self.sidebar_frame.columnconfigure(0, weight=1)
 
-        # Контент: 7 строк; растягивается только строка 3 (output_text).
-        for r in (0, 1, 2, 4, 5, 6):
+        # Контент: 9 строк; растягивается только строка 5 (output_text).
+        for r in (0, 1, 2, 3, 4, 6, 7, 8):
             self.content_frame.rowconfigure(r, weight=0)
-        self.content_frame.rowconfigure(3, weight=1)
-        self.content_frame.columnconfigure(0, weight=0)
+        self.content_frame.rowconfigure(5, weight=1)
+        self.content_frame.columnconfigure(0, weight=1)
+
+        # ---- Активная палитра и акцент ----
+        # Палитра — словарь ролей; hover-анимации и перекраска темы
+        # всегда читают цвета из него в момент события.
+        self._palette: dict[str, str] = dict(_PALETTE_DARK)
+        self._theme_name: str = "Тёмная"
+        self._accent_name: str = _DEFAULT_ACCENT
+        self._accent, self._accent_hover = _ACCENTS[_DEFAULT_ACCENT]
 
         # ---- Реестр примеров и словари поиска ----
-        # `example_id` (стабильный ключ) ↔ `title` (человекочитаемый
-        # текст для статусной строки). Берём из `example_runner`,
-        # чтобы имена не дублировались в UI-коде.
         examples: list[ExampleDescriptor] = list_examples()
         self._examples_by_id: dict[str, ExampleDescriptor] = {
             descriptor.example_id: descriptor for descriptor in examples
@@ -297,16 +474,10 @@ class ApplicationWindow:
         self._total_examples: int = len(self._examples_by_id)
 
         # ---- Карточки: id → CTkFrame + его дочерние label'ы ----
-        # `card_{example_id}` уже задан в .ui (фаза 3). Внутри
-        # каждой карточки — два CTkLabel: `card_title_*`, `card_desc_*`.
-        # Их id резолвятся здесь, чтобы навесить bind'ы (клик по
-        # тексту карточки тоже выбирает пример).
         self._cards: dict[str, ctk.CTkFrame] = {}
         self._card_labels: dict[str, list[ctk.CTkLabel]] = {}
         for example_id in self._examples_by_id:
-            card = self.builder.get_object(
-                f"card_{example_id}", self.window
-            )
+            card = self.builder.get_object(f"card_{example_id}", self.window)
             self._cards[example_id] = card
 
             labels: list[ctk.CTkLabel] = []
@@ -314,173 +485,779 @@ class ApplicationWindow:
                 f"card_title_{example_id}",
                 f"card_desc_{example_id}",
             ):
-                label_widget = self.builder.get_object(
-                    label_id, self.window
-                )
-                labels.append(label_widget)
+                labels.append(self.builder.get_object(label_id, self.window))
             self._card_labels[example_id] = labels
 
-            # Bind на саму карточку и на её label'ы. CTkFrame
-            # наследует `bind` от tkinter.Frame, поэтому
-            # `<Button-1>`/`<Enter>`/`<Leave>` работают штатно.
             self._bind_card_events(card, example_id, labels)
 
-        # ---- Состояние выбора ----
-        # Текущий выбранный пример; `None` — ничего не выбрано.
+        # ---- Состояние выбора и hover ----
         self._selected_example_id: str | None = None
-        # Текущее состояние hover: `True`, если курсор внутри карточки.
-        # Без этого признака Leave на дочернем label мог бы перетереть
-        # hover-цвет раньше Enter на родителе.
         self._hover_card_id: str | None = None
 
         # ---- Поиск: StringVar + trace ----
-        # `CTkEntry` поддерживает `textvariable` (CTkVariable или
-        # обычный `tk.StringVar`). Используем `tk.StringVar` —
-        # у `trace_add` тот же интерфейс, что и в tkinter.
         self._search_text: str = ""
         self._search_var = tk.StringVar()
         self.search_entry.configure(textvariable=self._search_var)
         self._search_var.trace_add("write", self._on_search_changed)
 
         # ---- Очередь и состояние воркера ----
-        # Очередь между фоновым потоком и главным потоком Tk. Поток
-        # кладёт кортежи `(kind, payload)`, где kind ∈ {"done", "error"}.
         self._queue: queue.Queue[tuple[str, object]] = queue.Queue()
-        # Активный поток-исполнитель примера (None, если ничего не идёт).
         self._worker: threading.Thread | None = None
 
         # ---- Свитчи: стартовое состояние ----
-        # По дизайн-спецификации оба свитча по умолчанию включены:
-        # «Очистка перед запуском» удобна в большинстве сценариев,
-        # «Автопрокрутка вывода» — привычное поведение терминала.
-        # CTkSwitch в pygubu не подхватывает переменную `variable`
-        # из .ui автоматически, поэтому состояние on задаётся кодом
-        # через `select()` сразу после `get_object`.
+        # CTkSwitch в pygubu не подхватывает `variable` из .ui,
+        # поэтому состояние on задаётся кодом через `select()`.
         self.clear_before_run_switch.select()
         self.autoscroll_switch.select()
 
-        # ---- Метрики: стартовое состояние ----
-        self.metric_registry_value.configure(
-            text=str(self._total_examples)
-        )
-        self.metric_last_run_value.configure(text=_METRIC_LAST_RUN_INITIAL)
+        # ---- Метрики и счётчики ----
+        self._runs_count: int = 0
+        self.metric_registry_value.configure(text=str(self._total_examples))
+        self.metric_runs_value.configure(text="0")
+        self.metric_clock_value.configure(text="--:--:--")
         self.metric_status_value.configure(text=_METRIC_STATUS_INITIAL)
         self.search_counter.configure(text=_SEARCH_COUNTER_ALL)
 
         # ---- Шапка: стартовое состояние ----
-        # До выбора примера показываем общий плейсхолдер.
         self.example_title.configure(text="Выберите пример")
         self.example_desc.configure(
             text="Кликните по карточке слева, чтобы выбрать пример"
         )
 
+        # ---- Тосты: активный таймер и «базовый» текст статуса ----
+        self._status_text: str = _STATUS_READY
+        self._toast_after_id: str | None = None
+
+        # ---- Реестр активных анимаций ----
+        # Ключ (id(widget), prop) → after-id текущей анимации.
+        self._anim_jobs: dict[tuple[int, str], str] = {}
+        # Флаг закрытия: все after-цепочки проверяют его и не
+        # перезапланируются после quit().
+        self._closing: bool = False
+
+        # ---- Симуляции задач ----
+        # На каждую задачу: флаг выполнения, текущее значение бара и
+        # after-id шага анимации. Задачи независимы и идут параллельно.
+        self._task_states: list[dict[str, object]] = [
+            {"running": False, "value": 0.0, "after_id": None}
+            for _ in _TASK_TITLES
+        ]
+        # Очередь цепочки для кнопки «Тест»: [1, 2] значит «после
+        # задачи 0 запустить 1, затем 2».
+        self._task_chain: list[int] = []
+
+        # ---- Скорость симуляций ----
+        self._speed: int = 5
+        self.speed_slider.set(self._speed)
+        self.speed_value.configure(text=f"{self._speed}x")
+
         # ---- Стартовое состояние ----
-        # `progressbar` в indeterminate-режиме не двигается без
-        # `start()`; явный `stop()` при инициализации — страховка от
-        # визуального «застрявшего» заполнения, если .ui когда-нибудь
-        # изменят.
-        self.progressbar.stop()
+        self.progressbar.set(0)
         self._set_status(_STATUS_READY)
         self._set_running(False)
-        # Все карточки по умолчанию не выбраны — применяем стартовый
-        # вид (без hover, без выделения).
         for example_id in self._cards:
             self._apply_card_appearance(example_id)
 
-        # ---- Подключение обработчиков ----
+        # ---- Терминал: теги подсветки ----
+        self._configure_terminal_tags()
+
+        # ---- Обработчики кнопок и контролов ----
         self.run_button.configure(command=self._on_run_clicked)
         self.clear_button.configure(command=self._on_clear_clicked)
         self.copy_button.configure(command=self._on_copy_clicked)
-        # Текст кнопок фиксируем в коде, чтобы он не зависел от .ui
-        # (.ui их тоже задаёт, но дубль здесь — защита от рассинхрона).
         self.run_button.configure(text=_BUTTON_RUN_TEXT)
         self.clear_button.configure(text=_BUTTON_CLEAR_TEXT)
         self.copy_button.configure(text=_BUTTON_COPY_TEXT)
 
-        # Закрытие окна крестиком — корректно завершаем mainloop,
-        # не оставляя висящих потоков (daemon-потоки и так умрут
-        # вместе с процессом, но явный `quit` правильнее для
-        # qa/adversary).
+        self.theme_segmented.set(self._theme_name)
+        self.theme_segmented.configure(command=self._on_theme_changed)
+        self.accent_menu.set(self._accent_name)
+        self.accent_menu.configure(command=self._on_accent_changed)
+        # pygubu-плагин не знает dropdown_fg_color — задаём кодом.
+        self.accent_menu.configure(dropdown_fg_color=self._palette["card"])
+
+        self.speed_slider.configure(command=self._on_speed_changed)
+        for idx, button in enumerate(self.task_buttons):
+            button.configure(
+                command=lambda i=idx: self._start_task(i)
+            )
+        self.demo_buttons["toast"].configure(command=self._on_demo_toast)
+        self.demo_buttons["wave"].configure(command=self._on_demo_wave)
+        self.demo_buttons["flash"].configure(command=self._on_demo_flash)
+        self.demo_buttons["reset"].configure(command=self._on_demo_reset)
+        self.demo_buttons["test"].configure(command=self._on_demo_test)
+
+        # ---- Парение: hover-анимации кнопок ----
+        # Акцентная кнопка светлеет; «карточные» — светлеют и поднимают
+        # бордер. Цвета берутся из палитры в момент события.
+        self._bind_button_hover(self.run_button, kind="accent")
+        for button in (
+            self.clear_button,
+            self.copy_button,
+            *self.task_buttons,
+            *self.demo_buttons.values(),
+        ):
+            self._bind_button_hover(button, kind="card")
+
+        # ---- FAB: парящая кнопка быстрого запуска ----
+        self._make_fab()
+
+        # ---- Фоновые сценарии ----
+        self._tick_clock()
+        self._pulse_fab()
+        self._intro_cards()
+
+        # Закрытие окна крестиком — корректно завершаем mainloop.
         self.window.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # ----------------------------------------------------------------
-    # Управление состоянием UI
+    # Анимации (ядро «парения»)
     # ----------------------------------------------------------------
+    def _animate(
+        self,
+        widget: object,
+        prop: str,
+        target: str,
+        duration_ms: int = _ANIM_DURATION_MS,
+        on_done: Callable[[], None] | None = None,
+    ) -> None:
+        """Плавно интерполировать цвет свойства `prop` виджета.
+
+        Пошаговая анимация через `after`: шаг — `_ANIM_STEP_MS`,
+        всего `duration_ms / step` шагов. Конкурирующая анимация той
+        же пары (виджет, свойство) отменяется — цвет всегда движется
+        к последней цели.
+
+        Если текущее значение свойства не валидный hex (например
+        "transparent" или объект цвета CTk), анимация вырождается в
+        мгновенный `configure` — это безопасный fallback.
+        """
+        key = (id(widget), prop)
+        previous = self._anim_jobs.pop(key, None)
+        if previous is not None:
+            try:
+                self.window.after_cancel(previous)
+            except Exception:
+                pass
+
+        try:
+            current = widget.cget(prop)  # type: ignore[attr-defined]
+        except Exception:
+            current = None
+        if not isinstance(current, str) or not _HEX_RE.match(current):
+            self._apply(widget, prop, target)
+            if on_done is not None:
+                on_done()
+            return
+        if current.lower() == target.lower():
+            if on_done is not None:
+                on_done()
+            return
+
+        steps = max(1, duration_ms // _ANIM_STEP_MS)
+
+        def step(index: int) -> None:
+            if self._closing:
+                self._anim_jobs.pop(key, None)
+                return
+            t = index / steps
+            self._apply(widget, prop, _lerp_color(current, target, t))
+            if index < steps:
+                job = self.window.after(
+                    _ANIM_STEP_MS, lambda: step(index + 1)
+                )
+                self._anim_jobs[key] = job
+            else:
+                self._apply(widget, prop, target)
+                self._anim_jobs.pop(key, None)
+                if on_done is not None:
+                    on_done()
+
+        job = self.window.after(_ANIM_STEP_MS, lambda: step(1))
+        self._anim_jobs[key] = job
+
+    @staticmethod
+    def _apply(widget: object, prop: str, value: str) -> None:
+        """configure с глушением исключений для мёртвых виджетов."""
+        try:
+            widget.configure(**{prop: value})  # type: ignore[attr-defined]
+        except Exception:
+            pass
+
+    def _bind_button_hover(
+        self, button: ctk.CTkButton, *, kind: str
+    ) -> None:
+        """Навесить плавный hover на кнопку (встроенный отключён в .ui).
+
+        kind="accent" — кнопка на акцентной заливке (run): hover чуть
+        светлее акцента. kind="card" — кнопка-«карточка»: фон светлеет
+        и бордер подсвечивается. Цвета читаются из активной палитры
+        в момент события — смена темы не ломает hover.
+        """
+        def enter(_event: object) -> None:
+            if str(button.cget("state")) == "disabled":
+                return
+            if kind == "accent":
+                self._animate(button, "fg_color", self._accent_hover)
+            else:
+                self._animate(button, "fg_color", self._palette["card_hover"])
+                self._animate(button, "border_color", self._palette["border_hover"])
+
+        def leave(_event: object) -> None:
+            if kind == "accent":
+                self._animate(button, "fg_color", self._accent)
+            else:
+                self._animate(button, "fg_color", self._palette["card"])
+                self._animate(button, "border_color", self._palette["border"])
+
+        button.bind("<Enter>", enter, add="+")
+        button.bind("<Leave>", leave, add="+")
+
+    # ----------------------------------------------------------------
+    # FAB (floating action button)
+    # ----------------------------------------------------------------
+    def _make_fab(self) -> None:
+        """Создать круглую парящую кнопку поверх правого нижнего угла.
+
+        place() позволяет наложить кнопку на grid-раскладку — это и
+        есть «парение». Постоянная пульсация (`_pulse_fab`) и подъём
+        при наведении делают её живой; клик — быстрый запуск
+        выбранного примера.
+        """
+        self.fab: ctk.CTkButton = ctk.CTkButton(
+            self.window,
+            text="▶",
+            width=54,
+            height=54,
+            corner_radius=27,
+            fg_color=self._accent,
+            hover_color=self._accent_hover,
+            text_color=self._palette["on_accent"],
+            font=("Arial", 18, "bold"),
+            border_width=0,
+            hover=False,
+            command=self._on_fab_clicked,
+        )
+        self.fab.place(relx=1.0, rely=1.0, x=-28, y=-28, anchor="se")
+        self.fab.lift()
+        self._fab_lifted: bool = False
+        self.fab.bind("<Enter>", self._on_fab_enter, add="+")
+        self.fab.bind("<Leave>", self._on_fab_leave, add="+")
+
+    def _on_fab_enter(self, _event: object) -> None:
+        """Hover FAB: подсветка + плавный «подъём» на 8 px вверх."""
+        if str(self.fab.cget("state")) == "disabled":
+            return
+        self._animate(self.fab, "fg_color", self._accent_hover)
+        self._fab_slide(to_y=-36)
+
+    def _on_fab_leave(self, _event: object) -> None:
+        """Уход курсора с FAB: возврат цвета и позиции."""
+        self._animate(self.fab, "fg_color", self._accent)
+        self._fab_slide(to_y=-28)
+
+    def _fab_slide(self, *, to_y: int) -> None:
+        """Плавно сдвинуть FAB по вертикали к `to_y` (place-координата)."""
+        key = (id(self.fab), "__y__")
+        previous = self._anim_jobs.pop(key, None)
+        if previous is not None:
+            try:
+                self.window.after_cancel(previous)
+            except Exception:
+                pass
+        steps = 6
+        try:
+            info = self.fab.place_info()
+            start_y = int(info.get("y", -28))
+        except Exception:
+            start_y = -28
+        if start_y == to_y:
+            return
+
+        def step(index: int) -> None:
+            if self._closing:
+                self._anim_jobs.pop(key, None)
+                return
+            t = index / steps
+            y = round(start_y + (to_y - start_y) * t)
+            try:
+                self.fab.place(y=y)
+            except Exception:
+                return
+            if index < steps:
+                self._anim_jobs[key] = self.window.after(
+                    _ANIM_STEP_MS, lambda: step(index + 1)
+                )
+            else:
+                self._anim_jobs.pop(key, None)
+
+        self._anim_jobs[key] = self.window.after(
+            _ANIM_STEP_MS, lambda: step(1)
+        )
+
+    def _pulse_fab(self) -> None:
+        """Постоянное «дыхание» FAB: мягкая волна к светлому и назад.
+
+        Планирует сам себя каждые `_FAB_PULSE_MS`. При закрытии окна
+        или активном hover не перезапускается (hover сам управляет
+        цветом).
+        """
+        if self._closing:
+            return
+
+        def back() -> None:
+            self._animate(self.fab, "fg_color", self._accent, 350)
+
+        self._animate(
+            self.fab,
+            "fg_color",
+            _lighten(self._accent, 0.28),
+            350,
+            on_done=back,
+        )
+        self.window.after(_FAB_PULSE_MS, self._pulse_fab)
+
+    def _on_fab_clicked(self) -> None:
+        """FAB = быстрый запуск выбранного примера (дубль run_button)."""
+        self._on_run_clicked()
+
+    # ----------------------------------------------------------------
+    # Часы и тосты
+    # ----------------------------------------------------------------
+    def _tick_clock(self) -> None:
+        """Обновить метрику «Время» и запланировать следующий тик."""
+        if self._closing:
+            return
+        self.metric_clock_value.configure(
+            text=_dt.datetime.now().strftime("%H:%M:%S")
+        )
+        self.window.after(_CLOCK_TICK_MS, self._tick_clock)
+
     def _set_status(self, text: str) -> None:
-        """Установить текст статусной строки. Вызывать из главного потока."""
-        self.status_label.configure(text=text)
+        """Установить «базовый» текст статусной строки.
 
-    def _set_metric_status(self, text: str, *, error: bool = False) -> None:
-        """Обновить значение метрики «Статус» и, опционально, её цвет.
-
-        Цвет берётся из палитры Tokyo Night: `c0caf5` (нейтральный)
-        для обычных состояний и `f7768e` (красный) для ошибки. Это
-        делает ошибку заметной даже без чтения status_label внизу.
+        Сбрасывает активный тост (он — временное сообщение поверх
+        базового статуса). Вызывать из главного потока.
         """
-        color = _COLOR_METRIC_ERROR if error else _COLOR_METRIC_STATUS
-        self.metric_status_value.configure(text=text, text_color=color)
+        self._status_text = text
+        if self._toast_after_id is not None:
+            try:
+                self.window.after_cancel(self._toast_after_id)
+            except Exception:
+                pass
+            self._toast_after_id = None
+        self.status_label.configure(
+            text=text, text_color=self._palette["text_dim2"]
+        )
 
-    def _set_running(self, running: bool) -> None:
-        """Переключить блокировку UI на время выполнения примера.
+    def _toast(self, text: str, duration_ms: int = 2600) -> None:
+        """Показать временное сообщение в статусной строке.
 
-        Блокируем кнопку запуска, чтобы не запустить пример повторно,
-        пока старый поток ещё не вернул результат. Поле поиска и
-        карточки блокируем через их состояние; в CustomTkinter для
-        CTkEntry и CTkSwitch есть `state` ("normal"/"disabled"), для
-        CTkFrame — bind на `<Button-1>`/`<Enter>`/`<Leave>` снимается
-        через `unbind` (мы временно отключаем клики, чтобы нельзя
-        было переключить пример посреди выполнения).
+        Через `duration_ms` вернётся базовый статус. Повторный тост
+        заменяет предыдущий (таймер отменяется).
         """
-        if running:
-            self.run_button.configure(
-                state="disabled",
-                text=_BUTTON_RUN_RUNNING,
+        if self._toast_after_id is not None:
+            try:
+                self.window.after_cancel(self._toast_after_id)
+            except Exception:
+                pass
+        self.status_label.configure(text=text, text_color=self._accent)
+
+        def restore() -> None:
+            self._toast_after_id = None
+            self.status_label.configure(
+                text=self._status_text,
+                text_color=self._palette["text_dim2"],
             )
-            self.search_entry.configure(state="disabled")
-            # Свитчи оставляем доступными: их состояние не влияет
-            # на текущий прогон (очистка — в начале, автоскролл —
-            # при выводе), а пользователю удобно переключить их
-            # заранее для следующего запуска.
-            self._set_cards_bind_enabled(False)
+
+        self._toast_after_id = self.window.after(duration_ms, restore)
+
+    # ----------------------------------------------------------------
+    # Тема и акцент
+    # ----------------------------------------------------------------
+    def _on_theme_changed(self, value: str) -> None:
+        """Сегмент «Оформление»: сменить режим CTk и перекрасить UI."""
+        if value not in _THEME_MODES:
+            return
+        self._theme_name = value
+        ctk.set_appearance_mode(_THEME_MODES[value])
+        self._palette = dict(
+            _PALETTE_LIGHT if value == "Светлая" else _PALETTE_DARK
+        )
+        self._apply_theme_surfaces()
+        self._apply_accent(self._accent_name, toast=False)
+        self._configure_terminal_tags()
+        for example_id in self._cards:
+            self._apply_card_appearance(example_id)
+        self._toast(f"Тема: {value}")
+
+    def _apply_theme_surfaces(self) -> None:
+        """Перекрасить все поверхности и тексты под активную палитру.
+
+        Списки собраны один раз в `__init__`-порядке: каждый элемент —
+        (виджет, свойство, роль палитры). Карточки примеров и
+        статусная строка перекрашиваются отдельно (их цвета зависят
+        от selection/hover и тостов).
+        """
+        pal = self._palette
+        # Крупные поверхности.
+        self.main_frame.configure(fg_color=pal["bg_app"])
+        self.sidebar_frame.configure(fg_color=pal["panel"])
+        self.content_frame.configure(fg_color=pal["panel"])
+        # Поля и терминал.
+        self.search_entry.configure(
+            fg_color=pal["input"],
+            border_color=pal["border"],
+            text_color=pal["text"],
+            placeholder_text_color=pal["text_dim2"],
+        )
+        self.output_text.configure(
+            fg_color=pal["term_bg"],
+            text_color=pal["term_fg"],
+            border_color=pal["border"],
+        )
+        # Карточки метрик и секция задач.
+        for card in (
+            self.metric_card_registry,
+            self.metric_card_runs,
+            self.metric_card_clock,
+            self.metric_card_status,
+            self.tasks_frame,
+        ):
+            card.configure(fg_color=pal["card"], border_color=pal["border"])
+        # «Карточные» кнопки.
+        for button in (
+            self.clear_button,
+            self.copy_button,
+            *self.task_buttons,
+            *self.demo_buttons.values(),
+        ):
+            button.configure(
+                fg_color=pal["card"],
+                hover_color=pal["card_hover"],
+                border_color=pal["border"],
+                text_color=pal["text"],
+            )
+        # Дорожки прогрессбаров.
+        self.progressbar.configure(fg_color=pal["track"])
+        for bar in self.task_bars:
+            bar.configure(fg_color=pal["track"])
+        # Сегмент темы и меню акцента.
+        self.theme_segmented.configure(
+            fg_color=pal["card"],
+            unselected_color=pal["track"],
+            unselected_hover_color=pal["card_hover"],
+            text_color=pal["text"],
+        )
+        self.accent_menu.configure(
+            fg_color=pal["card"],
+            button_color=pal["border"],
+            button_hover_color=pal["border_hover"],
+            text_color=pal["text"],
+            dropdown_fg_color=pal["card"],
+            dropdown_hover_color=pal["card_hover"],
+            dropdown_text_color=pal["text"],
+        )
+        # Тексты: яркие, обычные, приглушённые, призрачные.
+        self.example_title.configure(text_color=pal["text_bright"])
+        self.example_desc.configure(text_color=pal["text_dim"])
+        self.theme_label = self.builder.get_object("theme_label", self.window)
+        self.accent_label = self.builder.get_object("accent_label", self.window)
+        self.tasks_title = self.builder.get_object("tasks_title", self.window)
+        self.speed_label = self.builder.get_object("speed_label", self.window)
+        for label in (
+            self.theme_label,
+            self.accent_label,
+            self.speed_label,
+        ):
+            label.configure(text_color=pal["text_dim"])
+        for label_id in ("task_name_1", "task_name_2", "task_name_3"):
+            label = self.builder.get_object(label_id, self.window)
+            label.configure(text_color=pal["text_dim"])
+        for metric_label_id in (
+            "metric_registry_label",
+            "metric_runs_label",
+            "metric_clock_label",
+            "metric_status_label",
+        ):
+            label = self.builder.get_object(metric_label_id, self.window)
+            label.configure(text_color=pal["text_dim"])
+        self.metric_status_value.configure(text_color=pal["text"])
+        self.search_counter.configure(text_color=pal["text_dim2"])
+        self.sidebar_footer.configure(text_color=pal["text_ghost"])
+        self.sidebar_badge.configure(
+            fg_color=pal["card"], text_color=pal["text_dim"]
+        )
+        self.sidebar_title.configure(text_color=self._accent)
+        self.speed_value.configure(text_color=self._accent)
+        # Свитчи.
+        for switch in (self.clear_before_run_switch, self.autoscroll_switch):
+            switch.configure(
+                text_color=pal["text"],
+                fg_color=pal["track"],
+                progress_color=self._accent,
+                button_color=self._accent,
+                button_hover_color=self._accent_hover,
+            )
+        # Статусная строка (базовый цвет).
+        if self._toast_after_id is None:
+            self.status_label.configure(text_color=pal["text_dim2"])
+
+    def _on_accent_changed(self, value: str) -> None:
+        """OptionMenu «Акцент»: перекрасить акцентные элементы."""
+        self._apply_accent(value)
+        self._toast(f"Акцент: {value}")
+
+    def _apply_accent(self, name: str, *, toast: bool = True) -> None:
+        """Применить акцентную палитру `name` к акцентным виджетам.
+
+        Перекрашиваются: кнопка запуска, FAB, основной прогрессбар,
+        слайдер, сегмент темы, свитчи, заголовок сайдбара, значение
+        скорости. Цвета задач не трогаются — они различают задачи.
+        """
+        if name not in _ACCENTS:
+            return
+        self._accent_name = name
+        self._accent, self._accent_hover = _ACCENTS[name]
+
+        self.run_button.configure(
+            fg_color=self._accent,
+            hover_color=self._accent_hover,
+            text_color=self._palette["on_accent"],
+        )
+        if hasattr(self, "fab"):
+            self.fab.configure(
+                fg_color=self._accent,
+                hover_color=self._accent_hover,
+                text_color=self._palette["on_accent"],
+            )
+        self.progressbar.configure(progress_color=self._accent)
+        self.speed_slider.configure(
+            progress_color=self._accent,
+            button_color=self._accent,
+            button_hover_color=self._accent_hover,
+        )
+        self.theme_segmented.configure(
+            selected_color=self._accent,
+            selected_hover_color=self._accent_hover,
+        )
+        self.sidebar_title.configure(text_color=self._accent)
+        self.speed_value.configure(text_color=self._accent)
+        for switch in (self.clear_before_run_switch, self.autoscroll_switch):
+            switch.configure(
+                progress_color=self._accent,
+                button_color=self._accent,
+                button_hover_color=self._accent_hover,
+            )
+        if toast:
+            self._toast(f"Акцент: {name}")
+
+    # ----------------------------------------------------------------
+    # Демо-сценарии
+    # ----------------------------------------------------------------
+    def _on_demo_toast(self) -> None:
+        """Кнопка «Тост»: временное сообщение в статусной строке."""
+        self._toast("Привет! Это тост 👋")
+
+    def _on_demo_wave(self) -> None:
+        """Кнопка «Волна»: поочерёдная подсветка демо-кнопок слева направо."""
+        buttons = list(self.demo_buttons.values())
+        for index, button in enumerate(buttons):
+            delay = index * 70
+
+            def flash(b: ctk.CTkButton = button) -> None:
+                def back() -> None:
+                    self._animate(b, "fg_color", self._palette["card"], 220)
+
+                self._animate(
+                    b,
+                    "fg_color",
+                    self._accent_hover,
+                    140,
+                    on_done=back,
+                )
+
+            self.window.after(delay, flash)
+
+    def _on_demo_flash(self) -> None:
+        """Кнопка «Вспышка»: стаггерная подсветка бордеров карточек метрик."""
+        cards = (
+            self.metric_card_registry,
+            self.metric_card_runs,
+            self.metric_card_clock,
+            self.metric_card_status,
+        )
+        for index, card in enumerate(cards):
+            delay = index * 60
+
+            def flash(c: ctk.CTkFrame = card) -> None:
+                def back() -> None:
+                    self._animate(c, "border_color", self._palette["border"], 260)
+
+                self._animate(
+                    c,
+                    "border_color",
+                    self._accent_hover,
+                    140,
+                    on_done=back,
+                )
+
+            self.window.after(delay, flash)
+
+    def _on_demo_reset(self) -> None:
+        """Кнопка «Сброс»: остановить задачи, очистить вывод и счётчики."""
+        for idx, state in enumerate(self._task_states):
+            after_id = state["after_id"]
+            if after_id is not None:
+                try:
+                    self.window.after_cancel(str(after_id))
+                except Exception:
+                    pass
+            state["running"] = False
+            state["value"] = 0.0
+            state["after_id"] = None
+            self.task_buttons[idx].configure(state="normal")
+            self.task_bars[idx].set(0)
+            self.task_pcts[idx].configure(text="0%")
+        self._task_chain.clear()
+        self.progressbar.stop()
+        self.progressbar.set(0)
+        self._clear_output()
+        self._runs_count = 0
+        self.metric_runs_value.configure(text="0")
+        self._set_status(_STATUS_RESET)
+
+    def _on_demo_test(self) -> None:
+        """Кнопка «Тест»: запустить все три задачи цепочкой."""
+        if any(state["running"] for state in self._task_states):
+            self._toast("Задачи уже выполняются")
+            return
+        self._task_chain = [1, 2]
+        self._start_task(0)
+        self._toast("Тест: цепочка из 3 задач")
+
+    # ----------------------------------------------------------------
+    # Симуляция задач
+    # ----------------------------------------------------------------
+    def _on_speed_changed(self, value: float) -> None:
+        """Слайдер скорости: 1..10, отражается в подписи «Nx»."""
+        speed = int(round(float(value)))
+        speed = max(1, min(10, speed))
+        self._speed = speed
+        self.speed_value.configure(text=f"{speed}x")
+
+    def _start_task(self, index: int) -> None:
+        """Запустить симуляцию задачи `index` (0..2).
+
+        Анимация прогрессбара — пошаговая через `after`: шаг каждые
+        30 мс, приращение зависит от слайдера скорости. По завершении
+        кнопка разблокируется, в терминал пишется итог, и, если есть
+        очередь цепочки («Тест»), стартует следующая задача.
+        """
+        state = self._task_states[index]
+        if state["running"]:
+            return
+        state["running"] = True
+        state["value"] = 0.0
+        self.task_buttons[index].configure(state="disabled")
+        self._bump_runs()
+        title = _TASK_TITLES[index]
+        self._append_output(f"▶ Задача запущена: {title}\n", tag=_TAG_HDR)
+        # Запоминаем базовый статус, чтобы после завершения задачи
+        # вернуть его (например, «Выбран: ...»), а не «Готово».
+        if not self._status_text.startswith("Задача: "):
+            self._status_before_task: str = self._status_text
+        self._set_status(f"Задача: {title}")
+        self._task_step(index)
+
+    def _task_step(self, index: int) -> None:
+        """Один шаг анимации задачи: приращение бара и процента."""
+        if self._closing:
+            return
+        state = self._task_states[index]
+        if not state["running"]:
+            return
+        # Приращение за шаг: базовая скорость 5x ≈ полный бар за ~2 с.
+        step = 0.015 * (self._speed / 5.0)
+        value = float(state["value"]) + step
+        if value >= 1.0:
+            value = 1.0
+        state["value"] = value
+        self.task_bars[index].set(value)
+        self.task_pcts[index].configure(text=f"{round(value * 100)}%")
+        if value < 1.0:
+            state["after_id"] = self.window.after(
+                30, lambda: self._task_step(index)
+            )
         else:
-            self.run_button.configure(
-                state="normal",
-                text=_BUTTON_RUN_TEXT,
-            )
-            self.search_entry.configure(state="normal")
-            self._set_cards_bind_enabled(True)
+            self._finish_task(index)
 
-    def _set_cards_bind_enabled(self, enabled: bool) -> None:
-        """Включить/выключить bind'ы карточек на время выполнения примера.
+    def _finish_task(self, index: int) -> None:
+        """Завершение задачи: UI, лог, цепочка «Тест»."""
+        state = self._task_states[index]
+        state["running"] = False
+        state["after_id"] = None
+        self.task_buttons[index].configure(state="normal")
+        title = _TASK_TITLES[index]
+        self._append_output(f"✔ Задача завершена: {title} (100%)\n", tag=_TAG_HDR)
+        self._set_metric_status(_STATUS_DONE)
+        if self._status_text.startswith("Задача: "):
+            self._set_status(getattr(self, "_status_before_task", _STATUS_READY))
+        if self._task_chain:
+            nxt = self._task_chain.pop(0)
+            self.window.after(250, lambda: self._start_task(nxt))
 
-        Без отключения клик по карточке во время выполнения мог бы
-        переключить `_selected_example_id`, и пользователь ожидал бы,
-        что следующий запуск — это новый пример. Воркер при этом
-        уже работает со старым id — проще запретить клик.
+    def _bump_runs(self) -> None:
+        """Инкремент счётчика запусков (примеры и симуляции задач)."""
+        self._runs_count += 1
+        self.metric_runs_value.configure(text=str(self._runs_count))
+
+    # ----------------------------------------------------------------
+    # Вводная анимация карточек
+    # ----------------------------------------------------------------
+    def _intro_cards(self) -> None:
+        """Появление карточек: поочерёдный fade от фона панели к карточке.
+
+        Лёгкий «влёт» контента при старте: каждая карточка начинает
+        с цвета панели и плавно проявляется к своему цвету; стаггер —
+        50 мс между карточками.
         """
-        for example_id, card in self._cards.items():
-            labels = self._card_labels[example_id]
-            for widget in (card, *labels):
-                if enabled:
-                    self._bind_card_events(card, example_id, labels)
-                else:
-                    # `unbind` на конкретный sequence снимает только его.
-                    for sequence in ("<Button-1>", "<Enter>", "<Leave>"):
-                        widget.unbind(sequence)
+        for index, (example_id, card) in enumerate(self._cards.items()):
+            self._apply(card, "fg_color", self._palette["panel"])
 
-    def _append_output(self, text: str) -> None:
+            def reveal(c: ctk.CTkFrame = card, eid: str = example_id) -> None:
+                self._animate(c, "fg_color", self._palette["card"], 260)
+
+            self.window.after(120 + index * 50, reveal)
+
+    # ----------------------------------------------------------------
+    # Терминал: теги и вывод
+    # ----------------------------------------------------------------
+    def _configure_terminal_tags(self) -> None:
+        """Настроить теги подсветки терминала под активную палитру."""
+        try:
+            self.output_text.tag_config(
+                _TAG_HDR, foreground=self._accent
+            )
+            self.output_text.tag_config(
+                _TAG_ERR, foreground="#ff6b9d"
+            )
+        except Exception:
+            # Если теги недоступны — вывод остаётся монохромным.
+            pass
+
+    def _append_output(self, text: str, tag: str | None = None) -> None:
         """Дописать текст в конец `output_text`. Только из главного потока.
 
-        В конце — автопрокрутка к последней строке, чтобы пользователь
-        видел свежий вывод без ручного скролла. Автопрокрутка
-        подчиняется свитчу `autoscroll_switch` (см. контракт фазы 7).
-        CTkTextbox наследует tk.Text-совместимый интерфейс, поэтому
-        `insert`/`see` работают так же, как в стандартном Text.
+        В конце — автопрокрутка к последней строке, подчиняющаяся
+        свитчу `autoscroll_switch`. Если передан тег — строка
+        подсвечивается (hdr/err).
         """
-        # `state` у CTkTextbox по умолчанию normal в .ui; на всякий
-        # случай принудительно выставляем normal перед записью.
         self.output_text.configure(state="normal")
-        self.output_text.insert("end", text)
+        if tag is not None:
+            self.output_text.insert("end", text, tag)
+        else:
+            self.output_text.insert("end", text)
         if self._autoscroll_enabled():
             self.output_text.see("end")
 
@@ -488,10 +1265,7 @@ class ApplicationWindow:
         """Сообщить, включён ли свитч автопрокрутки.
 
         `CTkSwitch.get()` возвращает 1/0 в большинстве версий
-        CustomTkinter; запасной путь — `.cget("state")` на связанной
-        tkinter-переменной отсутствует (свитч не привязан к variable),
-        поэтому опираемся на `get()`. Если API поменяется — `get`
-        вернёт не-число, и мы тихо считаем свитч выключенным.
+        CustomTkinter; при любом сбое считаем свитч выключенным.
         """
         try:
             value = self.autoscroll_switch.get()
@@ -510,11 +1284,8 @@ class ApplicationWindow:
     def _copy_output_to_clipboard(self) -> bool:
         """Скопировать содержимое `output_text` в буфер обмена.
 
-        Используем `clipboard_clear` + `clipboard_append` от
-        tkinter-корня: в CustomTkinter clipboard живёт на `Tk`,
-        а у `CTk` это `self.window._apply_appearance_mode` /
-        `self.window.clipboard_*` (наследник `tk.Tk`). Возвращаем
-        `False`, если в `output_text` пусто (тогда не трогаем буфер).
+        Возвращает `False`, если в `output_text` пусто (тогда не
+        трогаем буфер).
         """
         content = self.output_text.get("1.0", "end-1c")
         if not content:
@@ -522,8 +1293,7 @@ class ApplicationWindow:
         self.window.clipboard_clear()
         self.window.clipboard_append(content)
         # `update_idletasks` форсирует обработку событий буфера обмена
-        # до того, как окно/процесс закроется — без этого на некоторых
-        # платформах вставка после `quit` теряет содержимое.
+        # до того, как окно/процесс закроется.
         self.window.update_idletasks()
         return True
 
@@ -557,12 +1327,7 @@ class ApplicationWindow:
             )
 
     def _on_card_click(self, example_id: str) -> None:
-        """Клик по карточке: выбрать пример и обновить шапку.
-
-        Подсвечиваем новую карточку и снимаем подсветку со старой.
-        Шапка (example_title / example_desc) обновляется сразу, чтобы
-        пользователь видел, что именно выбрано, ещё до клика «Запустить».
-        """
+        """Клик по карточке: выбрать пример и обновить шапку."""
         self._set_selected(example_id)
         self._update_header(example_id)
 
@@ -586,30 +1351,30 @@ class ApplicationWindow:
         self._set_status(f"Выбран: {self._id_to_title[example_id]}")
 
     def _on_card_enter(self, example_id: str) -> None:
-        """Курсор вошёл в карточку: применяем hover-цвет."""
+        """Курсор вошёл в карточку: применяем hover (анимированный)."""
         self._hover_card_id = example_id
         self._apply_card_appearance(example_id)
 
     def _on_card_leave(self, example_id: str) -> None:
-        """Курсор покинул карточку: снимаем hover-цвет.
+        """Курсор покинул карточку: снимаем hover.
 
         Если мышь «переехала» на дочерний label той же карточки,
-        Leave на родителе срабатывает раньше, чем Enter на label'е
-        (или одновременно с ним) — актуальный hover_id обновится
-        в `_on_card_enter` следующим тиком, и финальный цвет будет
-        корректным.
+        Leave на родителе срабатывает раньше, чем Enter на label'е —
+        актуальный hover_id обновится в `_on_card_enter` следующим
+        тиком, и финальный цвет будет корректным.
         """
         if self._hover_card_id == example_id:
             self._hover_card_id = None
         self._apply_card_appearance(example_id)
 
     def _apply_card_appearance(self, example_id: str) -> None:
-        """Пересчитать цвета карточки по (selected, hover).
+        """Пересчитать цвета карточки по (selected, hover) — с анимацией.
 
         Приоритет: selected > hover > default.
-        - selected=True: подсвеченный (border `#7aa2f7`, fg `#2f334d`).
-        - selected=False, hover=True: чуть светлее дефолта (`#363e59`).
-        - selected=False, hover=False: базовые цвета (`#292e42`/`#3b4261`).
+        - selected: бордер — акцент, фон — `card_selected`.
+        - hover: фон — `card_hover`.
+        - default: базовые `card`/`border`.
+        Переходы анимируются (160 мс), поэтому карточки «парят».
         """
         if example_id not in self._cards:
             return
@@ -618,16 +1383,17 @@ class ApplicationWindow:
         is_hovered = example_id == self._hover_card_id
 
         if is_selected:
-            border = _COLOR_CARD_SELECTED_BORDER
-            fg = _COLOR_CARD_SELECTED_FG
+            fg = self._palette["card_selected"]
+            border = self._accent
         elif is_hovered:
-            border = _COLOR_CARD_BORDER
-            fg = _COLOR_CARD_HOVER
+            fg = self._palette["card_hover"]
+            border = self._palette["border_hover"]
         else:
-            border = _COLOR_CARD_BORDER
-            fg = _COLOR_CARD_FG
+            fg = self._palette["card"]
+            border = self._palette["border"]
 
-        card.configure(border_color=border, fg_color=fg)
+        self._animate(card, "fg_color", fg)
+        self._animate(card, "border_color", border)
 
     # ----------------------------------------------------------------
     # Фильтрация карточек поиском
@@ -637,17 +1403,13 @@ class ApplicationWindow:
 
         Фильтрация по подстроке (case-insensitive) по title или
         description примера. Видимость переключаем через
-        `grid_remove()` / `grid()` — карточки уже разложены grid'ом
-        в `cards_scroll` (фаза 3, .ui). `grid_remove()` сохраняет
-        настройки grid, в отличие от `grid_forget()`: при показе
-        карточки вернутся на те же позиции.
+        `grid_remove()` / `grid()` — настройки grid сохраняются.
 
         Также обновляет `search_counter` в формате «Найдено: N из 5».
         """
         new_text = self._search_var.get()
         if new_text == self._search_text:
-            # `trace_add` иногда срабатывает на идентичное значение
-            # (например, при программном `set`). Выходим без работы.
+            # `trace_add` иногда срабатывает на идентичное значение.
             return
         self._search_text = new_text
 
@@ -659,51 +1421,81 @@ class ApplicationWindow:
                 visible = True
             else:
                 title = descriptor.title.lower()
-                # В реестре дескрипторов нет поля `description`,
-                # поэтому берём текст из label'а — он совпадает
-                # с тем, что в .ui.
                 desc_label = self._card_labels[example_id][1]
                 description = desc_label.cget("text").lower()
                 visible = (query in title) or (query in description)
             if visible:
                 visible_count += 1
-                # На случай, если ранее карточка была спрятана —
-                # `grid()` восстановит её по сохранённым опциям.
                 card.grid()
             else:
                 card.grid_remove()
 
-        # Счётчик «Найдено: N из M» — обновляется каждый раз.
         self.search_counter.configure(
             text=f"Найдено: {visible_count} из {self._total_examples}"
         )
 
-        # Если скрыли выбранную карточку — статус остаётся
-        # («Выбран: ...»). Намеренно не сбрасываем выбор: пользователь
-        # может очистить строку поиска и продолжить.
-
     # ----------------------------------------------------------------
     # Запуск примера в потоке
     # ----------------------------------------------------------------
+    def _set_metric_status(self, text: str, *, error: bool = False) -> None:
+        """Обновить значение метрики «Статус» и, опционально, её цвет."""
+        color = "#ff6b9d" if error else self._palette["text"]
+        self.metric_status_value.configure(text=text, text_color=color)
+
+    def _set_running(self, running: bool) -> None:
+        """Переключить блокировку UI на время выполнения примера.
+
+        Блокируем кнопку запуска, FAB, поле поиска и клики по
+        карточкам, чтобы нельзя было сменить выбор посреди прогона.
+        """
+        if running:
+            self.run_button.configure(
+                state="disabled",
+                text=_BUTTON_RUN_RUNNING,
+            )
+            # FAB создаётся после первого `_set_running(False)` в
+            # `__init__`, поэтому здесь защита по hasattr.
+            if hasattr(self, "fab"):
+                self.fab.configure(state="disabled")
+            self.search_entry.configure(state="disabled")
+            self._set_cards_bind_enabled(False)
+        else:
+            self.run_button.configure(
+                state="normal",
+                text=_BUTTON_RUN_TEXT,
+            )
+            if hasattr(self, "fab"):
+                self.fab.configure(state="normal")
+            self.search_entry.configure(state="normal")
+            self._set_cards_bind_enabled(True)
+
+    def _set_cards_bind_enabled(self, enabled: bool) -> None:
+        """Включить/выключить bind'ы карточек на время выполнения примера."""
+        for example_id, card in self._cards.items():
+            labels = self._card_labels[example_id]
+            for widget in (card, *labels):
+                if enabled:
+                    self._bind_card_events(card, example_id, labels)
+                else:
+                    for sequence in ("<Button-1>", "<Enter>", "<Leave>"):
+                        widget.unbind(sequence)
+
     def _on_run_clicked(self) -> None:
         """Кнопка «Запустить»: проверить выбор и стартовать воркер.
 
         Уважает свитч `clear_before_run_switch`: если он включён —
-        `output_text` очищается перед запуском (даже если предыдущий
-        прогон завершился с ошибкой, чтобы видеть только новый вывод).
+        `output_text` очищается перед запуском.
         """
         if self._worker is not None:
-            # Дублирующий клик, пока воркер жив. `_set_running(False)`
-            # при предыдущем завершении уже разблокировал кнопку,
-            # так что в норме сюда не попадаем — но это дешёвая защита
-            # от гонки между `after` и кликом.
             return
 
         example_id = self._selected_example_id
         if example_id is None:
-            self._set_status(_STATUS_NO_SELECTION)
-            # В `output_text` ничего не пишем — по контракту фазы 4
-            # статус достаточно.
+            self._toast(_STATUS_NO_SELECTION)
+            self._append_output(
+                "⚠ Выберите пример в списке слева и повторите.\n",
+                tag=_TAG_ERR,
+            )
             return
 
         if self._clear_before_run_enabled():
@@ -715,9 +1507,6 @@ class ApplicationWindow:
         try:
             value = self.clear_before_run_switch.get()
         except Exception:
-            # На старых версиях CTk `get` мог отсутствовать — считаем
-            # свитч выключенным, чтобы случайно не терять предыдущий
-            # вывод.
             return False
         try:
             return int(value) == 1
@@ -728,44 +1517,25 @@ class ApplicationWindow:
         """Подготовить UI и запустить пример `example_id` в потоке.
 
         1. Проверить, что воркера нет (идемпотентность).
-        2. Заблокировать UI, очистить `output_text` (если пользователь
-           выключил «Очистку перед запуском» — там уже очищено;
-           иначе очистка делается в `_on_run_clicked`).
-        3. Выставить статус «Выполняется...» и обновить метрику.
-        4. Запустить `progressbar.start(...)` — `indeterminate` крутит
-           «бегущий» индикатор; передаём `_QUEUE_POLL_MS`, чтобы шаг
-           анимации совпадал с интервалом опроса.
+        2. Заблокировать UI, при необходимости очистить вывод.
+        3. Выставить статус «Выполняется...» и обновить метрики.
+        4. Запустить `progressbar.start()` (indeterminate-режим).
         5. Создать daemon-поток и положить его в `self._worker`.
         6. Запланировать `_poll_queue` через `self.window.after`.
         """
         if self._worker is not None:
             return
 
-        # Блокируем UI до возврата воркера.
         self._set_running(True)
         if not self._clear_before_run_enabled():
-            # Свитч «очистка» выключен — очищаем здесь, чтобы свежий
-            # прогон не перемешивался со старым выводом (заголовок
-            # «=== Запуск: ...» появится всегда; он маркирует начало).
             self._clear_output()
         title = self._id_to_title.get(example_id, example_id)
         self._set_status(_STATUS_RUNNING)
         self._set_metric_status(_STATUS_RUNNING)
-        # CTk 6.0.0: `CTkProgressBar.start()` не принимает аргументов
-        # (интервал анимации встроен в реализацию `_internal_loop`).
-        # Передача `_QUEUE_POLL_MS` роняла `TypeError` (см. DEF-001).
+        self._bump_runs()
+        # CTk 6.0.0: `CTkProgressBar.start()` не принимает аргументов.
         self.progressbar.start()
 
-        # Daemon-поток: при завершении процесса поток не помешает
-        # выходу; при обычной работе его состояние держим в
-        # `self._worker` и якорим из главного потока.
-        # Старт воркера и `after(...)` обёрнуты в try/except: если
-        # что-то пойдёт не так уже после блокировки UI, откатим
-        # состояние (разблокируем кнопку, остановим прогресс), чтобы
-        # пользователь не остался в «прерванном» режиме. Заголовок
-        # `=== Запуск: ... ===` пишем только при успешном старте —
-        # раньше он оставался в output_text артефактом полузапуска
-        # (см. ADV-006).
         try:
             self._worker = threading.Thread(
                 target=self._run_in_worker,
@@ -782,24 +1552,17 @@ class ApplicationWindow:
             self._worker = None
             raise
 
-        # Заголовок вывода — после успешного старта воркера, чтобы
-        # исключение при `Thread()` не оставляло «голый» заголовок.
-        self._append_output(f"=== Запуск: {title} ({example_id}) ===\n")
+        self._append_output(
+            f"=== Запуск: {title} ({example_id}) ===\n", tag=_TAG_HDR
+        )
 
-        # `after` из главного потока Tk. Возвращаемое значение
-        # (id таймера) нам не нужно: `cancel` не предусмотрен —
-        # `_poll_queue` сам перестаёт планировать себя, когда
-        # воркер завершился и очередь пуста.
         self.window.after(_QUEUE_POLL_MS, self._poll_queue)
 
     def _run_in_worker(self, example_id: str) -> None:
         """Тело фонового потока: вызвать `run_example` и положить результат.
 
-        `run_example` пробрасывает исключения примера дальше.
-        Оборачиваем вызов `try/except`, чтобы окно не падало, а
-        traceback попал в `output_text` как обычный вывод. В очередь
-        кладём кортеж `(kind, payload)`: kind — `"done"` (с готовой
-        строкой) или `"error"` (с traceback).
+        Исключения примера не подавляются: traceback уходит в очередь
+        как терминальное сообщение `"error"`.
         """
         try:
             result = run_example(example_id)
@@ -811,23 +1574,14 @@ class ApplicationWindow:
     def _poll_queue(self) -> None:
         """Главный поток: забрать из очереди и обновить UI.
 
-        Поведение:
         - Пока воркер жив или в очереди что-то лежит — забираем
           `get_nowait`, обрабатываем каждое сообщение.
-        - Когда получаем терминальное сообщение (`done`/`error`):
-          останавливаем `progressbar`, разблокируем UI, обновляем
-          `status_label`, метрики, сбрасываем `self._worker = None`.
-        - Если воркер уже завершился и очередь пуста — на этом
-          опрос заканчивается (новых `after` не планируем).
-        - В любом другом случае (воркер жив, очередь пуста) —
-          планируем следующий опрос.
+        - Терминальное сообщение (`done`/`error`) закрывает прогон:
+          останавливаем прогрессбар, разблокируем UI, обновляем
+          статусы и метрики.
+        - Иначе планируем следующий опрос, пока есть работа.
         """
         terminal: tuple[str, object] | None = None
-        last_example_id: str | None = (
-            self._selected_example_id
-            if self._selected_example_id is not None
-            else None
-        )
         try:
             while True:
                 kind, payload = self._queue.get_nowait()
@@ -835,11 +1589,11 @@ class ApplicationWindow:
                     self._append_output(str(payload))
                     terminal = (kind, payload)
                 elif kind == "error":
-                    self._append_output(f"[ОШИБКА]\n{payload}\n")
+                    self._append_output(
+                        f"[ОШИБКА]\n{payload}\n", tag=_TAG_ERR
+                    )
                     terminal = (kind, payload)
                 else:
-                    # Неизвестный kind — логируем и считаем терминалом,
-                    # чтобы окно не «зависло» в режиме выполнения.
                     import logging
                     logging.getLogger(__name__).warning(
                         "Unknown queue message kind: %r", kind
@@ -849,74 +1603,45 @@ class ApplicationWindow:
             pass
 
         if terminal is not None:
-            # Терминальное сообщение — закрываем прогон.
             self.progressbar.stop()
             self._set_running(False)
             kind, _payload = terminal
             if kind == "done":
                 self._set_status(_STATUS_DONE)
                 self._set_metric_status(_STATUS_DONE)
-                # Метрика «Последний запуск» — название + локальное время.
-                self._update_last_run_metric(last_example_id)
             else:
                 self._set_status(_STATUS_ERROR)
                 self._set_metric_status(_STATUS_ERROR, error=True)
             self._worker = None
             return
 
-        # Нетерминальный опрос: воркер ещё работает либо только что
-        # завершился, но сообщение ещё не дошло. Планируем следующий
-        # тик, пока воркер жив, и один «дожим» после завершения.
         if self._worker is not None or not self._queue.empty():
             self.window.after(_QUEUE_POLL_MS, self._poll_queue)
         else:
-            # Ни воркера, ни сообщений — но терминала мы не получили.
-            # Чистим только прогресс и блокировку UI, статус не трогаем.
             self.progressbar.stop()
             self._set_running(False)
-
-    def _update_last_run_metric(self, example_id: str | None) -> None:
-        """Обновить метрику «Последний запуск»: название (HH:MM:SS)."""
-        if example_id is None or example_id not in self._id_to_title:
-            return
-        title = self._id_to_title[example_id]
-        timestamp = _dt.datetime.now().strftime("%H:%M:%S")
-        self.metric_last_run_value.configure(
-            text=f"{title} ({timestamp})"
-        )
 
     # ----------------------------------------------------------------
     # Кнопки: очистка, копирование, закрытие
     # ----------------------------------------------------------------
     def _on_clear_clicked(self) -> None:
-        """Кнопка «Очистить»: стереть `output_text` и сбросить статус.
-
-        Статус сбрасывается на «Готово» (а не на «Выбран: ...»), потому
-        что пользователь явно нажал «Очистить» — это жест сброса
-        рабочей области, а не жест «сними выделение». Сам выбор
-        (если был) сохраняем.
-        """
+        """Кнопка «Очистить»: стереть `output_text` и сбросить статус."""
         self._clear_output()
         self._set_status(_STATUS_READY)
 
     def _on_copy_clicked(self) -> None:
-        """Кнопка «Копировать»: перенести `output_text` в clipboard.
-
-        При успехе — короткий статус «Вывод скопирован» (по контракту
-        фазы 7 «не нужно возвращать прежний статус» — пользователь
-        увидит подтверждение и продолжит работу). При пустом выводе —
-        статус «Нечего копировать», буфер обмена не трогаем.
-        """
+        """Кнопка «Копировать»: перенести `output_text` в clipboard."""
         if self._copy_output_to_clipboard():
-            self._set_status(_STATUS_COPIED)
+            self._toast(_STATUS_COPIED)
         else:
-            self._set_status(_STATUS_COPIED_EMPTY)
+            self._toast(_STATUS_COPIED_EMPTY)
 
     def _on_close(self) -> None:
         """Обработчик закрытия окна (крестик): корректно выйти из mainloop.
 
         `self._worker` — daemon-поток; при выходе из процесса он и так
-        умрёт. Явный `quit` нужен, чтобы `mainloop` вернул управление
-        вызывающему коду, а не оставил окно «висеть» в фоне.
+        умрёт. Все after-цепочки проверяют `self._closing` и не
+        перезапланируются.
         """
+        self._closing = True
         self.window.quit()
