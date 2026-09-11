@@ -205,6 +205,9 @@ QT_QPA_PLATFORM=offscreen python -m ex_window_app_pyside6.main_window_app --smok
   - `--smoke-window [сек]` — показывает окно и закрывает его через N секунд
     (по умолчанию 5), код возврата 0.
 - Обычный запуск без флагов открывает окно с заголовком «PySide6 — пример окна».
+- На Linux (Ubuntu/Debian) для обычного запуска нужен системный пакет
+  `libxcb-cursor0` (`sudo apt install libxcb-cursor0`) — см. «Требования к запуску».
+  Headless-режимы `offscreen` работают без него.
 - Не входит в пакетный запуск `main.py` — открытое окно заблокировало бы
   общий прогон.
 
@@ -214,6 +217,52 @@ QT_QPA_PLATFORM=offscreen python -m ex_window_app_pyside6.main_window_app --smok
 - Python 3.12 или выше
 - Установленные зависимости из `pyproject.toml` (выполнить `uv sync`)
 - Для некоторых примеров может потребоваться доступ к сети или файловой системе
+
+### Qt-примеры на Linux (Ubuntu/Debian)
+
+PySide6 (Qt6) для запуска окна с реальным дисплеем требует системных библиотек XCB,
+которых нет в базовой поставке Ubuntu. Если при обычном запуске
+`ex_window_app_pyside6` появляется ошибка
+`Could not load the Qt platform plugin "xcb"`, установите недостающий пакет:
+
+```bash
+sudo apt install libxcb-cursor0
+```
+
+Остальные XCB-библиотеки (`libxcb-icccm4`, `libxcb-keysyms1`, `libxcb-shape0`,
+`libxcb-xinerama0`, `libxkbcommon-x11-0`) в Ubuntu 22.04 уже стоят. Headless-режимы
+(`--smoke`, `--smoke-window` с `QT_QPA_PLATFORM=offscreen`) этих библиотек не требуют,
+поэтому проверки проходят и без них.
+
+#### Проверка окна без дисплея (Xvfb)
+
+Если дисплея нет (ssh, CI, сессия агента), окно всё равно можно поднять и увидеть —
+через виртуальный X-сервер из пакета `xvfb`:
+
+```bash
+xvfb-run -a --server-args="-screen 0 1280x800x24" \
+  uv run python -m ex_window_app_pyside6.main_window_app --smoke-window 3
+```
+
+Скриншот окна снимается самим Qt, без ImageMagick и `import`:
+
+```bash
+xvfb-run -a --server-args="-screen 0 1280x800x24" uv run python -c "
+from PySide6.QtWidgets import QApplication
+from ex_window_app_pyside6.application_window import ApplicationWindow
+app = QApplication([])
+w = ApplicationWindow()
+w.name_input.setText('Иван')
+w.message_input.setText('привет')
+w.show_button.click()
+w.show()
+app.processEvents()
+print(w.grab().save('tasks/current/screenshots/gui_test_under_xvfb.png'), w.result_label.text())
+"
+```
+
+Это единственный способ проверить реальный xcb-плагин: `QT_QPA_PLATFORM=offscreen`
+обходит его стороной и не поймает, например, нехватку `libxcb-cursor0`.
 
 ## Советы по изучению
 
