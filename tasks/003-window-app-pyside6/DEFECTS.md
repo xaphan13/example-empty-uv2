@@ -51,10 +51,10 @@ exit=1
 
 - 2026-09-10 — qa: воспроизведено по шагам выше, `exit=1`,
   `OverflowError: cannot convert float infinity to integer` (строка 111
-  `main_window_app.py`). Сырой вывод — `e2e/qa_adv_repro.md`. Запись создана со
+  `main_window_ctk.py`). Сырой вывод — `e2e/qa_adv_repro.md`. Запись создана со
   статусом OPEN, исправление не проверялось.
 - 2026-09-10 — backend-dev: ИСПРАВЛЕНО. В `_positive_float`
-  (`ex_window_app_pyside6/main_window_app.py`) добавлен `import math` и условие
+  (`../../ex_window_app_pyside6/main_window_pyside.py`) добавлен `import math` и условие
   `if not math.isfinite(seconds) or seconds <= 0:` вместо `if seconds <= 0:`.
   Прогон: `--smoke-window inf` → exit 2, stderr
   `argument --smoke-window: значение должно быть > 0: 'inf'`, traceback отсутствует;
@@ -107,7 +107,7 @@ exit=1
 
 - 2026-09-10 — qa: воспроизведено по шагам выше, `exit=1`,
   `ValueError: cannot convert float NaN to integer` (строка 111
-  `main_window_app.py`). Сырой вывод — `e2e/qa_adv_repro.md`. Запись создана со
+  `main_window_ctk.py`). Сырой вывод — `e2e/qa_adv_repro.md`. Запись создана со
   статусом OPEN, исправление не проверялось.
 - 2026-09-10 — backend-dev: ИСПРАВЛЕНО. Тот же корень, что и DEF-001: добавлена
   проверка конечности `math.isfinite`. Прогон: `--smoke-window nan` → exit 2, stderr
@@ -161,7 +161,7 @@ exit=1
 
 - 2026-09-10 — qa: воспроизведено по шагам выше, `exit=1`,
   `OverflowError: cannot convert float infinity to integer` (строка 111
-  `main_window_app.py`). Сырой вывод — `e2e/qa_adv_repro.md`. Запись создана со
+  `main_window_ctk.py`). Сырой вывод — `e2e/qa_adv_repro.md`. Запись создана со
   статусом OPEN, исправление не проверялось.
 - 2026-09-10 — backend-dev: ИСПРАВЛЕНО. Тот же корень, что и DEF-001: `1e309`
   переполняется в `inf`, теперь отсекается `math.isfinite`. Прогон:
@@ -185,7 +185,7 @@ exit=1
 
 Общий корень: `_positive_float` проверяла только `seconds <= 0`, поэтому `inf` и `nan`
 проходили валидацию и падали на `int(args.smoke_window * 1000)` в `main()`
-(`main_window_app.py`, строка 111). Исправление: добавлена проверка
+(`main_window_ctk.py`, строка 111). Исправление: добавлена проверка
 `not math.isfinite(seconds) or seconds <= 0`. Все три сценария перепроверены qa после
 фикса — exit 2, traceback отсутствует, регресс и ruff зелёные
 (`e2e/qa_def_recheck.md`); DEF-001..003 переведены в CLOSED.

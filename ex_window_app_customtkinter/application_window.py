@@ -264,7 +264,7 @@ class ApplicationWindow:
        виджеты, настраивает grid-веса, создаёт FAB и запускает
        фоновые «тикающие» сценарии (часы, пульс FAB, intro-анимация
        карточек).
-    2. Вызывающий код (`main_window_app.py`) стартует
+    2. Вызывающий код (`main_window_ctk.py`) стартует
        `self.window.mainloop()`.
     3. Примеры запускаются в daemon-потоке; их вывод приходит в
        главный поток через `queue.Queue` и `_poll_queue` (after).

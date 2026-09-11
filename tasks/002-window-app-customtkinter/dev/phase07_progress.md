@@ -2,7 +2,7 @@
 
 Дата: 2026-09-09.
 Зона: `ex_window_app_customtkinter/window_app.ui`, `ex_window_app_customtkinter/application_window.py`,
-`ex_window_app_customtkinter/main_window_app.py` (только docstring/--help), `tasks/current/dev/phase07_*`.
+`../../../ex_window_app_customtkinter/main_window_ctk.py` (только docstring/--help), `tasks/current/dev/phase07_*`.
 
 Контракт: см. раздел «Фаза 7: Редизайн v2 — заполненное окно» в
 [tasks/current/REQUIREMENTS.md](../REQUIREMENTS.md). Шапка + опции + метрики
@@ -18,7 +18,7 @@ search_counter в сайдбаре; окно 900x600 (minsize 800x520).
    добавить grid-веса, wiring новых виджетов, переработка логики шапки,
    copy_button, метрик и search_counter. Старая логика (выбор карточки,
    фильтр, threading+queue+after, progressbar) сохранена.
-3. `main_window_app.py` — заменить упоминания ttkbootstrap на CustomTkinter
+3. `main_window_ctk.py` — заменить упоминания ttkbootstrap на CustomTkinter
    в module docstring и argparse help.
 
 ## Прогресс

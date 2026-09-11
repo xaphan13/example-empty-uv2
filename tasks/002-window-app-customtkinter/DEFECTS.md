@@ -39,7 +39,7 @@ ADV-004 → DEF-003; ADV-003, ADV-005 — REJECTED (см. disposition в ADVERSA
 - Серьёзность: средняя.
 - Источник: ADV-004.
 - Статус: CLOSED.
-- Воспроизведение: `uv run python -m ex_window_app_customtkinter.main_window_app --smoke-window -5` — окно поднимается и мгновенно закрывается, exit 0, без предупреждения (`main_window_app.py`: `delay_ms = max(1, int(round(seconds * 1000)))`).
+- Воспроизведение: `uv run python -m ex_window_app_customtkinter.main_window_app --smoke-window -5` — окно поднимается и мгновенно закрывается, exit 0, без предупреждения (`main_window_ctk.py`: `delay_ms = max(1, int(round(seconds * 1000)))`).
 - Ожидание: отрицательное (и нулевое) значение секунд — мусорный ввод: argparse должен отклонить его с понятным сообщением и exit 2, аналогично невалидному float.
 - Факт: ввод принимается молча, задержка clamp'ится к 1 мс; пользователь не узнаёт об ошибке.
 - Требование к фиксу: type-функция для `--smoke-window`, принимающая только строго положительные числа (сообщение вида «seconds must be > 0»); `max(1, ...)` после этого не нужен, но вреда не несёт.

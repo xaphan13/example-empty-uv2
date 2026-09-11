@@ -21,7 +21,7 @@
 2. Проверить `uv run ruff check ex_window_app_customtkinter/`.
 3. Проверить headless-импорт.
 4. Проверить `--smoke-window 5` под `xvfb-run -a`.
-5. Точечно поправить `main_window_app.py`, если рассинхрон API.
+5. Точечно поправить `main_window_ctk.py`, если рассинхрон API.
 
 ## Ход
 
@@ -186,7 +186,7 @@ checkpoint** (exit 0, окно открывается и закрывается)
 
 Checkpoint фазы 4 — **зелёный**. Правки минимальны и локализованы в
 `application_window.py` (одна точечная вставка вызова + один новый
-статический метод). `.ui` не трогали, `main_window_app.py` не трогали.
+статический метод). `.ui` не трогали, `main_window_ctk.py` не трогали.
 
 #### Файлы этой добивки
 - `ex_window_app_customtkinter/application_window.py` — добавлен

@@ -1,7 +1,7 @@
 # Фаза 3 — Точка входа и smoke (backend-dev)
 
 Дата: 2026-09-10
-Файл фазы: `ex_window_app_pyside6/main_window_app.py` (новый, единственный).
+Файл фазы: `../../../ex_window_app_pyside6/main_window_pyside.py` (новый, единственный).
 Контракт: `main(argv: Sequence[str] | None = None) -> int`; `_build_parser()` с
 `prog="python -m ex_window_app_pyside6.main_window_app"`; `--smoke` (`store_true`);
 `--smoke-window [SECONDS]` (`nargs="?"`, `type=_positive_float`, `const=5.0`,
@@ -10,7 +10,7 @@
 
 ## Прогресс
 
-- [x] Шаг 1. `main_window_app.py` — создан одним `write_file`
+- [x] Шаг 1. `main_window_ctk.py` — создан одним `write_file`
 - [x] Шаг 2. `uv run ruff check ex_window_app_pyside6/` — exit 0, `All checks passed!`
 - [x] Шаг 3. offscreen `--smoke` — stdout `smoke ok`, exit 0
 - [x] Шаг 4. offscreen `--smoke-window 3` — exit 0, elapsed 4s (3 с таймер + старт)
@@ -46,7 +46,7 @@ offscreen-платформы Qt, не ошибка. `--smoke-window 3` улож�
 
 ## Итог
 
-Фаза 3 завершена: создан единственный новый файл `ex_window_app_pyside6/main_window_app.py`.
+Фаза 3 завершена: создан единственный новый файл `../../../ex_window_app_pyside6/main_window_pyside.py`.
 Контракт соблюдён — `main(argv) -> int`, `_build_parser()` с `prog`, `--smoke`,
 `--smoke-window [SECONDS]` с `_positive_float`/`const=5.0`/`default=False`,
 одновременные флаги → stderr + exit 2, `QApplication` только внутри `main()`,

@@ -4,7 +4,7 @@
   `--smoke-window inf` → `OverflowError: cannot convert float infinity to integer`, exit=1;
   `--smoke-window nan` → `ValueError: cannot convert float NaN to integer`, exit=1;
   `--smoke-window 1e309` → `OverflowError: cannot convert float infinity to integer`, exit=1.
-  Все — строка 111 `main_window_app.py`, `int(args.smoke_window * 1000)`.
+  Все — строка 111 `main_window_ctk.py`, `int(args.smoke_window * 1000)`.
 - 2026-09-11 — правка `_positive_float`: добавлен `import math`, условие
   `if not math.isfinite(seconds) or seconds <= 0:`. Статус: применено.
 - 2026-09-11 — checkpoint зелёный (сырой вывод — `tasks/current/dev/fix_def01_checkpoint.txt`):

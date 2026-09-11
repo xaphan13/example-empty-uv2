@@ -12,7 +12,7 @@
 - Цветовая палитра — **зафиксирована точно** как в разделе «Цветовая палитра», без свободы подбора для разработчика (решение пользователя).
 - Логика запуска примеров **не трогается**: `example_runner.py` сохраняет реестр из 5 примеров и API `list_examples()` / `run_example()`.
 - Пакет **переименовать** в `ex_window_app_customtkinter` через `git mv`, правку импортов, docstring'ов и документации.
-- `main_window_app.py` не меняет семантики: `--smoke [name]` (headless, exit 0/2) и `--smoke-window [sec]` (окно + автозакрытие через `after`) сохраняются с теми же аргументами.
+- `main_window_ctk.py` не меняет семантики: `--smoke [name]` (headless, exit 0/2) и `--smoke-window [sec]` (окно + автозакрытие через `after`) сохраняются с теми же аргументами.
 - Дизайн-требования жёстко зафиксированы в спеке: тёмная тема, скругления, акцент, отступы, hover — см. раздел «Дизайн-спецификация».
 - `main.py` не трогать; другие `ex_*` не трогать; тесты не писать; новых GUI-библиотек кроме `customtkinter` не добавлять. Исключение — `pillow`: обязательное требование плагина `pygubu.plugins.customtkinter` (безусловный `from PIL import ...` на уровне модуля `ctkbase.py`); до этого задания pillow присутствовал в `uv.lock` транзитивно через `ttkbootstrap` и был удалён вместе с ним в фазе 1 — решение оркестратора от 2026-09-09: `pillow` добавлен как прямая runtime-зависимость.
 
@@ -23,7 +23,7 @@
 - `pyproject.toml` / `uv.lock` с `customtkinter` и `pillow` в runtime-зависимостях, без `ttkbootstrap`; `pygubu` и `pygubu-designer` остаются.
 - Пакет `ex_window_app_customtkinter/` (переименованный из `ex_window_app_ttkbootstrap`):
   - `__init__.py` — маркер пакета с новым именем.
-  - `main_window_app.py` — точка входа, парсит `--smoke [name]` / `--smoke-window [sec]`, лениво импортирует GUI.
+  - `main_window_ctk.py` — точка входа, парсит `--smoke [name]` / `--smoke-window [sec]`, лениво импортирует GUI.
   - `example_runner.py` — без изменений логики (реестр, захват вывода).
   - `application_window.py` — класс `ApplicationWindow` на CustomTkinter + pygubu Builder.
   - `window_app.ui` — XML-разметка Pygubu на CTk-виджетах (см. дизайн-спецификацию).
@@ -123,9 +123,9 @@
 | 2 | Переименование пакета | backend-dev | `ex_window_app_ttkbootstrap/` → `ex_window_app_customtkinter/` (git mv) | все 5 файлов под новым именем; импорты и docstring'ы обновлены | ruff + headless import всех модулей | ~10 |
 | 3 | UI-разметка на CTk | backend-dev | `ex_window_app_customtkinter/window_app.ui` | корневой `CTk`/`CTkFrame`, stable id: `main_frame`, `sidebar_frame`, `content_frame`, `search_entry`, `cards_scroll`, `card_*`, `output_text`, `run_button`, `clear_button`, `progressbar`, `status_label` | Builder загружает `.ui` без ошибок под Xvfb | ~14 |
 | 4 | Оконный класс | backend-dev | `ex_window_app_customtkinter/application_window.py` | `ApplicationWindow` на CustomTkinter; wiring виджетов; клик по карточке выбирает пример; запуск в `threading.Thread` + `queue` + `after()` | ruff; smoke-window под Xvfb | ~15 |
-| 5 | Точка входа | backend-dev | `ex_window_app_customtkinter/main_window_app.py` | переименование импортов/текстов; `--smoke` и `--smoke-window` с прежней семантикой | ruff; `--smoke valid_bracket`; `--smoke-window 5` | ~10 |
+| 5 | Точка входа | backend-dev | `../../ex_window_app_customtkinter/main_window_ctk.py` | переименование импортов/текстов; `--smoke` и `--smoke-window` с прежней семантикой | ruff; `--smoke valid_bracket`; `--smoke-window 5` | ~10 |
 | 6 | Документация | backend-dev | `docs/01_project_structure.md`, `docs/02_examples_overview.md` | новое имя пакета, команда запуска, описание CustomTkinter | grep нового имени и команды | ~6 |
-| 7 | Редизайн v2: заполненное окно | backend-dev | `window_app.ui`, `application_window.py`, `main_window_app.py` (тексты --help) | grid-веса, шапка/опции/метрики/кнопки по всему окну, палитра Tokyo Night; см. дизайн-спецификацию v2 | ruff; smoke-window под Xvfb; скриншот-проверка заполненности | ~15 |
+| 7 | Редизайн v2: заполненное окно | backend-dev | `window_app.ui`, `application_window.py`, `main_window_ctk.py` (тексты --help) | grid-веса, шапка/опции/метрики/кнопки по всему окну, палитра Tokyo Night; см. дизайн-спецификацию v2 | ruff; smoke-window под Xvfb; скриншот-проверка заполненности | ~15 |
 
 ### Фаза 1: Зависимости
 
@@ -153,7 +153,7 @@
 - Контракт:
   - `git mv ex_window_app_ttkbootstrap ex_window_app_customtkinter`.
   - Во всех `.py` заменить `ex_window_app_ttkbootstrap` на `ex_window_app_customtkinter` (импорты, docstring'и, тексты помощи argparse).
-  - Логика `example_runner.py`, `application_window.py`, `main_window_app.py` не меняется — только переименование.
+  - Логика `example_runner.py`, `application_window.py`, `main_window_ctk.py` не меняется — только переименование.
 - Шаги:
   1. `git mv` каталога.
   2. Массовая замена имени пакета во всех файлах каталога.
@@ -229,7 +229,7 @@
 
 ### Фаза 5: Точка входа
 
-- Файлы: `ex_window_app_customtkinter/main_window_app.py`.
+- Файлы: `../../ex_window_app_customtkinter/main_window_ctk.py`.
 - Контракт:
   - Импорты и тексты помощи argparse обновлены под новое имя пакета.
   - `--smoke [name]` — headless, импортирует только `example_runner`, exit 0/2.
@@ -270,11 +270,11 @@
 
 ### Фаза 7: Редизайн v2 — заполненное окно
 
-- Файлы: `ex_window_app_customtkinter/window_app.ui`, `ex_window_app_customtkinter/application_window.py`, `ex_window_app_customtkinter/main_window_app.py` (только тексты `--help`/docstring: убрать остатки упоминаний ttkbootstrap).
+- Файлы: `ex_window_app_customtkinter/window_app.ui`, `ex_window_app_customtkinter/application_window.py`, `../../ex_window_app_customtkinter/main_window_ctk.py` (только тексты `--help`/docstring: убрать остатки упоминаний ttkbootstrap).
 - Контракт:
   - `.ui`: новые секции контента — шапка (`example_title`, `example_desc`), панель опций (`options_frame`, `clear_before_run_switch`, `autoscroll_switch`), ряд метрик (`metrics_frame`, 3 мини-карточки), панель кнопок (`buttons_frame`, `run_button`, `clear_button`, `copy_button`); сайдбар дополняется `search_counter`. Палитра Tokyo Night по дизайн-спецификации v2.
   - `application_window.py`: grid-веса (сайдбар фикс, контент растягивается, output_text растягивается); wiring новых виджетов; свитчи управляют поведением (очистка перед запуском, автопрокрутка); «Копировать» — буфер обмена; метрики обновляются (реестр/последний запуск/статус); счётчик поиска.
-  - `main_window_app.py`: только тексты помощи, без изменения CLI-семантики.
+  - `main_window_ctk.py`: только тексты помощи, без изменения CLI-семантики.
 - Checkpoint:
   ```bash
   uv run ruff check ex_window_app_customtkinter/
@@ -338,7 +338,7 @@ qa-прогоном 9/9 критериев (e2e/01–04) и перепровер
 - `ex_window_app_ttkbootstrap/` → `ex_window_app_customtkinter/` (git mv, 5 файлов).
 - `window_app.ui` → полная разметка на CTk-виджетах (26 объектов v1 → 45 объектов v2), палитра Tokyo Night, padx/pady в формате `a b`.
 - `application_window.py` → `ApplicationWindow` на CTk + pygubu Builder: grid-веса (сайдбар 280 px, контент растягивается), клик/hover/фильтр карточек, свитчи, метрики, копирование в буфер, threading+queue+after.
-- `main_window_app.py` → тексты под CustomTkinter; `--smoke-window` валидирует строго положительные числа (DEF-003).
+- `main_window_ctk.py` → тексты под CustomTkinter; `--smoke-window` валидирует строго положительные числа (DEF-003).
 - `docs/01_project_structure.md`, `docs/02_examples_overview.md` → новый пакет, зависимости, описание UI v2.
 
 ## Критерии успеха

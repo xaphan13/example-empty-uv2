@@ -9,7 +9,7 @@
 - Идея пользователя (дословно): «нужно сделать новый пакедж и создать там приложение оконное на пайтон и qt6 - небольгое пара кнопок и пара вводов текста» (в тексте идеи — «небольшое пара кнопок и пара вводов текста»).
 - Объём строго минимальный: **два** поля ввода и **две** кнопки; никаких тем, анимаций, сайдбаров, реестров примеров, второго окна и настроек.
 - Qt-биндинг — **PySide6** (рекомендация spec-writer; подлежит подтверждению пользователем, см. открытый вопрос 1). Обоснование: лицензия LGPL против GPL/коммерческой у PyQt6, официальный проект «Qt for Python» от самой Qt, колёса на PyPI под Python 3.12 — отдельная сборка не нужна.
-- Имя пакета — `ex_window_app_pyside6`, точка входа — `main_window_app.py` (говорящее самодокументирующее имя, как у соседнего GUI-примера). При выборе PyQt6 имя пакета меняется на `ex_window_app_pyqt6`, план фаз и контракт остаются те же, меняются только импорты `PySide6.*` → `PyQt6.*`.
+- Имя пакета — `ex_window_app_pyside6`, точка входа — `main_window_ctk.py` (говорящее самодокументирующее имя, как у соседнего GUI-примера). При выборе PyQt6 имя пакета меняется на `ex_window_app_pyqt6`, план фаз и контракт остаются те же, меняются только импорты `PySide6.*` → `PyQt6.*`.
 - Разметка — **только кодом**, без pygubu и `.ui`-файла: pygubu работает исключительно с tkinter и здесь неприменим.
 - Пример **не регистрируется в `main.py`** — как и соседний `ex_window_app_customtkinter`: открытое окно заблокировало бы общий прогон `python main.py`.
 - Логирование через `config_log.logF` **не подключается**: пример демонстрирует только Qt. Это согласуется с соседним `ex_window_app_customtkinter`, который тоже не тянет `config_log`.
@@ -24,7 +24,7 @@
 - Пакет `ex_window_app_pyside6/`:
   - `__init__.py` — маркер пакета, docstring на русском, без импортов GUI;
   - `application_window.py` — класс `ApplicationWindow(QWidget)`: два `QLineEdit`, два `QPushButton`, одна `QLabel` результата;
-  - `main_window_app.py` — точка входа: обычный запуск, `--smoke`, `--smoke-window [СЕКУНДЫ]`.
+  - `main_window_ctk.py` — точка входа: обычный запуск, `--smoke`, `--smoke-window [СЕКУНДЫ]`.
 - Обновлённые `docs/01_project_structure.md` и `docs/02_examples_overview.md` — правит оркестратор (см. раздел ниже), не разработчик.
 
 Поведение:
@@ -63,7 +63,7 @@
 |---|---|---|---|---|---|---|
 | 1 | Зависимость Qt6 | backend-dev | `pyproject.toml`, `uv.lock` | добавить runtime-зависимость `pyside6`, ничего не удалять | `uv run python -c "import PySide6; from PySide6.QtCore import qVersion; print('Qt', qVersion())"` → exit 0, `Qt 6.x.y` | ~6 |
 | 2 | Пакет и окно | backend-dev | `ex_window_app_pyside6/__init__.py`, `ex_window_app_pyside6/application_window.py` | `ApplicationWindow(QWidget)`; замороженные objectName: `application_window`, `name_input`, `message_input`, `show_button`, `clear_button`, `result_label` | ruff + offscreen-конструирование окна с печатью objectName и двух кликов → exit 0 | ~14 |
-| 3 | Точка входа и smoke | backend-dev | `ex_window_app_pyside6/main_window_app.py` | `main(argv) -> int`, `_build_parser()`, флаги `--smoke` и `--smoke-window SECONDS`; `QApplication` только внутри `main()` | ruff + `--smoke` (печатает `smoke ok`) + `--smoke-window 3` → оба exit 0 | ~12 |
+| 3 | Точка входа и smoke | backend-dev | `../../ex_window_app_pyside6/main_window_pyside.py` | `main(argv) -> int`, `_build_parser()`, флаги `--smoke` и `--smoke-window SECONDS`; `QApplication` только внутри `main()` | ruff + `--smoke` (печатает `smoke ok`) + `--smoke-window 3` → оба exit 0 | ~12 |
 
 ### Фаза 1: Зависимость Qt6
 
@@ -125,7 +125,7 @@
 
 ### Фаза 3: Точка входа и smoke
 
-- Файлы: `ex_window_app_pyside6/main_window_app.py`.
+- Файлы: `../../ex_window_app_pyside6/main_window_pyside.py`.
 - Контракт (замораживается):
   - `main(argv: Sequence[str] | None = None) -> int`; `if __name__ == "__main__": raise SystemExit(main())`.
   - `_build_parser() -> argparse.ArgumentParser` с `prog="python -m ex_window_app_pyside6.main_window_app"`.
@@ -136,7 +136,7 @@
   - `QApplication` создаётся только внутри `main()`; на уровне модуля GUI-объектов нет.
   - Docstring модуля описывает три режима, комментарии на русском, длина строки ≤ 120.
 - Шаги:
-  1. Создать `main_window_app.py` одним `write_file`.
+  1. Создать `main_window_ctk.py` одним `write_file`.
   2. `uv run ruff check ex_window_app_pyside6/`.
   3. Прогнать оба offscreen-режима.
 - Checkpoint:
@@ -212,7 +212,7 @@ adversarial-прогоном; три найденных Major-дефекта в�
 - `uv.lock` → зафиксированы `pyside6==6.11.2`, `pyside6-addons`, `pyside6-essentials`, `shiboken6`.
 - `ex_window_app_pyside6/__init__.py` → новый, маркер пакета, docstring на русском.
 - `ex_window_app_pyside6/application_window.py` → новый, класс `ApplicationWindow(QWidget)`: два `QLineEdit`, два `QPushButton`, `QLabel` результата, замороженные objectName.
-- `ex_window_app_pyside6/main_window_app.py` → новый, точка входа: обычный запуск, `--smoke`, `--smoke-window [SECONDS]`; `_positive_float` с проверкой `math.isfinite`.
+- `../../ex_window_app_pyside6/main_window_pyside.py` → новый, точка входа: обычный запуск, `--smoke`, `--smoke-window [SECONDS]`; `_positive_float` с проверкой `math.isfinite`.
 - `docs/01_project_structure.md` → дерево проекта и список зависимостей (правка оркестратора).
 - `docs/02_examples_overview.md` → команды запуска и описание примера (правка оркестратора).
 
@@ -236,7 +236,7 @@ adversarial-прогоном; три найденных Major-дефекта в�
 - DEF-002 `--smoke-window nan` → CLOSED (e2e/qa_adv_repro.md, e2e/qa_def_recheck.md)
 - DEF-003 `--smoke-window 1e309` → CLOSED (e2e/qa_adv_repro.md, e2e/qa_def_recheck.md)
 
-Исправление: `_positive_float` в `main_window_app.py` — добавлена проверка
+Исправление: `_positive_float` в `main_window_ctk.py` — добавлена проверка
 `not math.isfinite(seconds) or seconds <= 0`. Все три сценария перепроверены qa:
 exit 2, traceback отсутствует; регресс и ruff зелёные.
 

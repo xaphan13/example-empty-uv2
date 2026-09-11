@@ -8,7 +8,7 @@
 ## План (выполнен)
 
 1. Создать прогресс-файл.
-2. Одним `write_file` создать `main_window_app.py`:
+2. Одним `write_file` создать `main_window_ctk.py`:
    - На уровне модуля — только `import argparse`, `import sys`,
      `from typing import Sequence`, константы и декларации функций.
      `tkinter`/`ttkbootstrap`/`pygubu` НЕ импортируются.
@@ -154,7 +154,7 @@ exit=0
 Суть: argparse-уровневая валидация `--smoke-window` через `type=float` плюс
 упрощение мёртвой ветки в `main()`.
 
-### Что изменено (только `main_window_app.py`)
+### Что изменено (только `main_window_ctk.py`)
 
 1. В `_build_parser()` к `--smoke-window` добавлен `type=float`.
    Argparse теперь сам валидирует значение: при `'abc'` / `'5x'` печатает

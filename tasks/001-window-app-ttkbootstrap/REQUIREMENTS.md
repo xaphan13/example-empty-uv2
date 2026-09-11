@@ -25,7 +25,7 @@ ttkbootstrap, а из окна запускаются курируемые пр�
   `darkly`, `superhero`, `cyborg`, `solar`, `vapor`; тема по умолчанию —
   `darkly`.
 - Имена пакета/модулей: `ex_window_app_ttkbootstrap`,
-  `main_window_app.py`, `application_window.py`, `example_runner.py`,
+  `main_window_ctk.py`, `application_window.py`, `example_runner.py`,
   `window_app.ui`.
 - Комментарии и docstrings — на русском.
 
@@ -37,7 +37,7 @@ ttkbootstrap, а из окна запускаются курируемые пр�
   и dev-зависимостью `pygubu-designer`.
 - Пакет `ex_window_app_ttkbootstrap/`:
   - `__init__.py`
-  - `main_window_app.py` — точка входа, парсит `--smoke`.
+  - `main_window_ctk.py` — точка входа, парсит `--smoke`.
   - `example_runner.py` — реестр примеров, запуск с захватом вывода.
   - `application_window.py` — класс окна, загрузка `.ui`, обработчики виджетов.
   - `window_app.ui` — XML-разметка Pygubu.

@@ -153,7 +153,7 @@ QT_QPA_PLATFORM=offscreen python -m ex_window_app_pyside6.main_window_app --smok
 Оконное GUI-приложение на базе `CustomTkinter` (CTk-виджеты поверх Tkinter) с
 тёмной темой и контрастной палитрой Tokyo Night; интерфейс загружается из
 `.ui`-файла Pygubu (`window_app.ui`) через плагин `pygubu.plugins.customtkinter`,
-точка входа — `ex_window_app_customtkinter/main_window_app.py`:
+точка входа — `../ex_window_app_customtkinter/main_window_ctk.py`:
 - Раскладка (окно 900×600): **сайдбар слева** с заголовком «Примеры», полем
   поиска, счётчиком «Найдено: N из 5» и `CTkScrollableFrame` со списком из 5
   карточек-примеров; **контент справа** заполнен секциями сверху вниз —
@@ -189,7 +189,7 @@ QT_QPA_PLATFORM=offscreen python -m ex_window_app_pyside6.main_window_app --smok
 Минимальное оконное приложение на `PySide6` (Qt6) — тот же класс задачи, что и
 `ex_window_app_customtkinter`, но на другом стеке (дублирование примеров «одна
 задача — разные подходы» в проекте приветствуется). Точка входа —
-`ex_window_app_pyside6/main_window_app.py`:
+`../ex_window_app_pyside6/main_window_pyside.py`:
 - Разметка собирается только кодом (без `.ui`-файлов и pygubu), класс окна —
   `ApplicationWindow(QWidget)` в `ex_window_app_pyside6/application_window.py`.
 - Состав окна ровно по заданию: два поля ввода (`QLineEdit` — «Имя» и

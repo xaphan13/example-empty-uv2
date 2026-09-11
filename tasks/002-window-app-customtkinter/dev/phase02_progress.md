@@ -22,7 +22,7 @@
   - `__init__.py`: docstring (1 вхождение).
   - `example_runner.py`: НЕ содержит `ex_window_app_ttkbootstrap` (только `ex_async_simple`, `ex_code_war` и т.п. — это другие пакеты, не трогаем).
   - `application_window.py`: docstring (2 вхождения) + `from ex_window_app_ttkbootstrap.example_runner import ...` (1 вхождение) + комментарий `python -c "from ex_window_app_ttkbootstrap.application_window import ApplicationWindow"` (1 вхождение) = 4 вхождения.
-  - `main_window_app.py`: docstring (несколько), `prog=`, `description=`, два `from ex_window_app_ttkbootstrap...` (один для `example_runner`, один для `application_window`), комментарий-пример — нужно грепнуть.
+  - `main_window_ctk.py`: docstring (несколько), `prog=`, `description=`, два `from ex_window_app_ttkbootstrap...` (один для `example_runner`, один для `application_window`), комментарий-пример — нужно грепнуть.
   - `window_app.ui`: НЕ содержит имени пакета (только классы `ttk.*` — это и есть UI-логика, не трогаем).
 - git: ветка `task-new-custom`, каталог трекается (5 файлов в `git ls-files`), рабочее дерево содержит изменения фазы 1 (M pyproject.toml, M uv.lock, M tasks/current/REQUIREMENTS.md, ?? tasks/current/dev/) — это не моя зона, не трогаю.
 - Стартовый checkpoint выполнен и зафиксирован.
@@ -35,7 +35,7 @@
   - `__init__.py`
   - `application_window.py`
   - `example_runner.py`
-  - `main_window_app.py`
+  - `main_window_ctk.py`
   - `window_app.ui`
 - Нетрекаемые `__pycache__/` и `log/` переехали в новый каталог как обычные
   файлы на диске (не индексируются).
@@ -49,7 +49,7 @@
 `ex_window_app_ttkbootstrap` (греп):
 - `__init__.py`: 1 (docstring, строка 1)
 - `application_window.py`: 3 (docstring x2 + импорт + комментарий-пример)
-- `main_window_app.py`: 6 (docstring + комментарий + prog + 3 импорта)
+- `main_window_ctk.py`: 6 (docstring + комментарий + prog + 3 импорта)
 - `window_app.ui`: 1 (комментарий XML)
 
 Действие: `edit` с `replace_all=true` в каждом из 4 файлов.
@@ -62,7 +62,7 @@
 Распределение замен по файлам (итог):
 - `__init__.py`: 1 замена
 - `application_window.py`: 3 замены (строки 1, 30, 93)
-- `main_window_app.py`: 6 замен (строки 1, 23, 62, 126, 179, 201)
+- `main_window_ctk.py`: 6 замен (строки 1, 23, 62, 126, 179, 201)
 - `window_app.ui`: 1 замена (строка 3)
 - **Итого: 11 замен**
 
@@ -77,7 +77,7 @@
 - `__init__.py` (654 байт)
 - `application_window.py` (26608 байт)
 - `example_runner.py` (15425 байт)
-- `main_window_app.py` (14559 байт)
+- `main_window_ctk.py` (14559 байт)
 - `window_app.ui` (7129 байт)
 - `log/` (нетрекаемый)
 

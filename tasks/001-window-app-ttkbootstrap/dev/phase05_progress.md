@@ -5,7 +5,7 @@
 - `docs/01_project_structure.md`:
   - В дерево проекта добавить `ex_window_app_ttkbootstrap/` со списком модулей
     (`__init__.py`, `example_runner.py`, `application_window.py`,
-    `main_window_app.py`, `window_app.ui`).
+    `main_window_ctk.py`, `window_app.ui`).
   - В раздел «Зависимости» добавить `ttkbootstrap` (runtime), `pygubu` (runtime),
     `pygubu-designer` (dev).
 - `docs/02_examples_overview.md`:
@@ -23,7 +23,7 @@
 - 2026-09-08 — `docs/01_project_structure.md`: добавлен пакет
   `ex_window_app_ttkbootstrap/` в дерево (после `ex_all_others/`) с пятью
   файлами: `__init__.py`, `example_runner.py`, `application_window.py`,
-  `main_window_app.py`, `window_app.ui`. В раздел «Зависимости» добавлены
+  `main_window_ctk.py`, `window_app.ui`. В раздел «Зависимости» добавлены
   `ttkbootstrap` и `pygubu` (runtime) и подсекция «Dev-зависимости» с
   `pygubu-designer`. Статус: grep зелёный.
 - 2026-09-08 — `docs/02_examples_overview.md`: в «Через конкретные модули»
