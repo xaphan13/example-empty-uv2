@@ -1,5 +1,6 @@
 # VSCode
 .vscode/
+uv.lock
 
 # JetBrains IDE
 .idea/
