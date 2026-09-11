@@ -31,6 +31,11 @@ EXPECTED_OBJECT_NAMES = (
     "show_button",
     "clear_button",
     "result_label",
+    "volume_slider",
+    "slider_value_label",
+    "mode_checkbox",
+    "theme_combo",
+    "progress_bar",
 )
 
 
@@ -81,6 +86,11 @@ def _run_smoke() -> int:
         window.show_button.objectName(),
         window.clear_button.objectName(),
         window.result_label.objectName(),
+        window.volume_slider.objectName(),
+        window.slider_value_label.objectName(),
+        window.mode_checkbox.objectName(),
+        window.theme_combo.objectName(),
+        window.progress_bar.objectName(),
     }
     missing = [name for name in EXPECTED_OBJECT_NAMES if name not in present]
     if missing:
